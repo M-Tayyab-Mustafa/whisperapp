@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "642599397339",
+    "project_id": "whisperrapp-bacf0",
+    "storage_bucket": "whisperrapp-bacf0.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:642599397339:android:44cb5dd598f17e24e0e9fe",
+        "android_client_info": {
+          "package_name": "com.example.whisperapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDf0D1Urm6VyaGeKwpydOAy3S4EJ1VGiUU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
