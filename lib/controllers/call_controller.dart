@@ -106,6 +106,8 @@ class CallController {
       }
     });
 
+    addCallHistory(roomId, mateUid, callType);
+
     return roomId;
   }
 
@@ -268,29 +270,30 @@ class CallController {
   Future<void> addCallHistory(
     String callRoomId,
     String mateUid,
-    String callerUid,
-    CustomLoader customLoader,
+    String callType,
   ) async {
     FirebaseFirestore fireStore = FirebaseFirestore.instance;
     String currentUserUid = FirebaseAuth.instance.currentUser!.uid;
-    String dbRef = "users";
 
     // Set the call history to current user.
-    await fireStore.collection('users').doc(currentUserUid).collection("call_history").doc(callRoomId).set(
+    await fireStore.collection('users').doc(currentUserUid).collection("call_history").doc().set(
       {
-        "caller": callerUid,
+        "call_by_me": true,
+        "mate_uid": mateUid,
+        "call_type": callType,
         "time": DateTime.now().toString(),
       },
     );
+
     // Set the call history to mateUid.
-    await fireStore.collection(dbRef).doc(mateUid).collection("calls").doc(callRoomId).set(
+    await fireStore.collection('users').doc(mateUid).collection("call_history").doc().set(
       {
-        "caller": callerUid,
+        "call_by_me": false,
+        "mate_uid": currentUserUid,
+        "call_type": callType,
         "time": DateTime.now().toString(),
       },
     );
-    // Hide loader
-    customLoader.hideLoader();
   }
 
   // clear history.

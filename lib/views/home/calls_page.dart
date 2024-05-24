@@ -47,6 +47,7 @@ class _CallsPageState extends State<CallsPage> {
             if (streamSnapshot.hasData) {
               if (streamSnapshot.data!.docs.isNotEmpty) {
                 return ListView.builder(
+                  itemCount: streamSnapshot.data!.docs.length,
                   itemBuilder: (context, index) {
                     streamSnapshot.data!.docs.sort((a, b) => b['time'].compareTo(a['time']),);
                     var doc = streamSnapshot.data!.docs[index];
