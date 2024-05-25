@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:external_app_launcher/external_app_launcher.dart';
 import 'package:flutter/material.dart';
@@ -8,6 +10,9 @@ import 'package:whisperapp/controllers/call_controller.dart';
 import 'package:whisperapp/views/calls/answer_call.dart';
 import 'package:whisperapp/widgets/custom_loader.dart';
 import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
+
+import '../../creater/webrtc/webrtc_objects.dart';
+import 'call_page.dart';
 
 class Ringing extends StatefulWidget {
   const Ringing({super.key, required this.mateUid, required this.roomId, required this.fromOverlay});
@@ -23,7 +28,8 @@ class Ringing extends StatefulWidget {
 class _RingingState extends State<Ringing> {
   final FirebaseFirestore fireStore = FirebaseFirestore.instance;
 
-  final CallController callController = CallController();
+  final CallController signalling = WebRTCInstances.getSignalInstance();
+  final CustomLoader customLoader = CustomLoader();
 
   @override
   void initState() {
@@ -58,72 +64,60 @@ class _RingingState extends State<Ringing> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
-                        FloatingActionButton(
-                          key: GlobalKey(),
-                          onPressed: () {
-                            callController.closeCall(
-                              remoteRenderer: RTCVideoRenderer(),
-                              localRenderer: RTCVideoRenderer(),
-                              roomId: widget.roomId,
-                              customLoader: CustomLoader(),
-                            );
-                            if (widget.fromOverlay) {
-                            } else {
-                              Get.back();
-                            }
-                          },
-                          backgroundColor: Colors.redAccent,
-                          child: const Icon(
-                            Icons.call_end,
-                            color: Colors.white,
+                        SizedBox(
+                          height: 60,
+                          width: 60,
+                          child: IconButton.filled(
+                            style: const ButtonStyle(
+                              backgroundColor: MaterialStatePropertyAll(
+                                Colors.redAccent,
+                              ),
+                            ),
+                            onPressed: () async {
+                              cancelByMe = true;
+                              await customLoader.showLoader(context);
+                              await signalling.closeCall(
+                                remoteRenderer: RTCVideoRenderer(),
+                                localRenderer: RTCVideoRenderer(),
+                                roomId: widget.roomId,
+                                customLoader: customLoader,
+                              );
+                              if (widget.fromOverlay) {
+                              } else {
+                                Get.back();
+                              }
+                            },
+                            icon: const Icon(
+                              Icons.call_end,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
-                        FloatingActionButton(
-                          key: GlobalKey(),
-                          onPressed: () async {
-                            if (widget.fromOverlay) {
-                              // SharedPreferences sharedPreference = await SharedPreferences.getInstance();
-                              // await sharedPreference.setString('calling', snapShot.data!.data()!['username']);
-                              // FirebaseFirestore.instance
-                              //     .collection('${snapShot.data!.data()!['username']} calling')
-                              //     .doc()
-                              //     .set({
-                              //   'roomId': widget.roomId,
-                              // });
-                              await LaunchApp.openApp(
-                                androidPackageName: 'com.example.whisperapp',
-                              );
-                            } else {
+                        SizedBox(
+                          height: 60,
+                          width: 60,
+                          child: IconButton.filled(
+                            style: const ButtonStyle(
+                              backgroundColor: MaterialStatePropertyAll(
+                                Colors.green,
+                              ),
+                            ),
+                            onPressed: () {
+                              if (widget.fromOverlay) {
+                                LaunchApp.openApp(
+                                  androidPackageName: 'com.example.whisperapp',
+                                );
+                              } else {}
                               Navigator.pop(context);
-                              Get.to(AnswerCallPage(
-                                roomId: widget.roomId,
-                                mateName: snapShot.data!.data()!['username'],
-                              ))?.then((value) {
-                                if (value != null) {
-                                  showDialog(
-                                    barrierDismissible: false,
-                                    context: context,
-                                    builder: (context) => AlertDialog.adaptive(
-                                      title: const Text('Call End'),
-                                      content: const Text('Your mate end the Call.'),
-                                      actions: [
-                                        ElevatedButton(
-                                          onPressed: () async {
-                                            Navigator.pop(context);
-                                          },
-                                          child: const Text('Ok'),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                }
-                              });
-                            }
-                          },
-                          backgroundColor: Colors.green,
-                          child: const Icon(
-                            Icons.call,
-                            color: Colors.white,
+                              Get.to(() => AnswerCallPage(
+                                    roomId: widget.roomId,
+                                    mateName: snapShot.data!.data()!['username'],
+                                  ));
+                            },
+                            icon: const Icon(
+                              Icons.call,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
                       ],

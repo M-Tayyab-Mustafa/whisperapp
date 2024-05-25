@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -84,8 +85,45 @@ class _AnswerCallPageState extends State<AnswerCallPage> {
         remoteRenderer: remoteRenderer,
         localRenderer: localRenderer,
         roomId: widget.roomId,
+        peerConnectionCallback: (peerConnection) {
+          peerConnection.onConnectionState = (RTCPeerConnectionState state) {
+            log('From Call Page RTCPeerConnectionState:: $state');
+            if (state == RTCPeerConnectionState.RTCPeerConnectionStateConnected) {
+              setState(() {
+                isConnected = true;
+              });
+            }
+          };
+        },
       )
-          .whenComplete(() {
+          .whenComplete(() async {
+        var db = FirebaseFirestore.instance.collection('callRooms').doc(widget.roomId).snapshots();
+        db.listen((event) {
+          if (!event.exists) {
+            signaling.hangCall(remoteRenderer: remoteRenderer, localRenderer: localRenderer);
+            Get.back();
+            if (!cancelByMe) {
+              showDialog(
+                barrierDismissible: false,
+                context: context,
+                builder: (context) => AlertDialog.adaptive(
+                  title: const Text('Call End'),
+                  content: const Text('Your mate end the Call.'),
+                  actions: [
+                    ElevatedButton(
+                      onPressed: () async {
+                        cancelByMe = false;
+                        Navigator.pop(context);
+                      },
+                      child: const Text('Ok'),
+                    ),
+                  ],
+                ),
+              );
+            }
+            Get.back();
+          }
+        });
         _callStartTime = DateTime.now();
         timer = Timer.periodic(const Duration(seconds: 1), (timer) {
           setState(() {
@@ -118,10 +156,21 @@ class _AnswerCallPageState extends State<AnswerCallPage> {
               child: SizedBox(
                 height: double.infinity,
                 width: double.infinity,
-                child: RTCVideoView(
-                  remoteRenderer,
-                  objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
-                ),
+                child: isConnected
+                    ? RTCVideoView(
+                        remoteRenderer,
+                        objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
+                      )
+                    : Center(
+                        child: Text(
+                          'Joining...',
+                          style: GoogleFonts.lato(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            fontSize: 20,
+                          ),
+                        ),
+                      ),
               ),
             ),
 
@@ -150,7 +199,7 @@ class _AnswerCallPageState extends State<AnswerCallPage> {
                     ),
                   ),
                   Text(
-                    _ongoingDuration.toString(),
+                    _ongoingDuration.toString().split('.').first,
                     style: GoogleFonts.lato(
                       color: Colors.white,
                       fontSize: 13,
@@ -163,8 +212,51 @@ class _AnswerCallPageState extends State<AnswerCallPage> {
             ),
           ),
 
+          if (callType == 'audio')
+            Center(
+              child: Container(
+                height: 150,
+                width: 150,
+                decoration: BoxDecoration(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(100),
+                ),
+                child: SvgPicture.asset(
+                  "assets/icons/default.svg",
+                ),
+              ),
+            ),
+          if (callType == 'audio')
+            Padding(
+              padding: const EdgeInsets.only(top: 180),
+              child: Center(
+                child: Text(
+                  widget.mateName,
+                  style: GoogleFonts.lato(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          if (callType == 'audio' && !isConnected)
+            Padding(
+              padding: const EdgeInsets.only(top: 280),
+              child: Center(
+                child: Text(
+                  'Joining...',
+                  style: GoogleFonts.lato(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+
           //Local RTCVideoView
-          if (callType != 'audio')
+          if (callType != 'audio' && isConnected)
             Padding(
               padding: const EdgeInsets.only(right: 8, bottom: 100),
               child: Align(
@@ -192,7 +284,27 @@ class _AnswerCallPageState extends State<AnswerCallPage> {
             localRenderer: localRenderer,
             roomId: widget.roomId,
             callType: callType ?? '',
-          )
+          ),
+          if (callType != 'audio')
+            Positioned(
+              top: kToolbarHeight + 50,
+              right: 20,
+              child: SizedBox(
+                height: 45,
+                width: 45,
+                child: IconButton.filled(
+                  style: const ButtonStyle(
+                    backgroundColor: MaterialStatePropertyAll(AppTheme.callButtonsColor),
+                  ),
+                  onPressed: () {
+                    localRenderer.srcObject!.getVideoTracks().forEach((track) {
+                      Helper.switchCamera(track);
+                    });
+                  },
+                  icon: const Icon(Icons.flip_camera_ios_outlined),
+                ),
+              ),
+            ),
         ],
       ),
     );

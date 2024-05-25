@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -16,6 +17,8 @@ import '../../controllers/notifications_controller.dart';
 import '../../creater/webrtc/webrtc_objects.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/custom_loader.dart';
+
+bool cancelByMe = false;
 
 class CallPage extends StatefulWidget {
   const CallPage({
@@ -50,6 +53,8 @@ class _CallPageState extends State<CallPage> {
 
   Timer? timer;
 
+  bool isConnected = false;
+
   @override
   void initState() {
     super.initState();
@@ -76,9 +81,45 @@ class _CallPageState extends State<CallPage> {
           this.roomId = roomId;
           setState(() {});
         },
+        peerConnectionCallback: (peerConnection) {
+          peerConnection.onConnectionState = (RTCPeerConnectionState state) {
+            log('From Call Page RTCPeerConnectionState:: $state');
+            if (state == RTCPeerConnectionState.RTCPeerConnectionStateConnected) {
+              setState(() {
+                isConnected = true;
+              });
+            }
+          };
+        },
       );
       await getMateToken();
       await sendCalMessageInvitationCode();
+      var db = FirebaseFirestore.instance.collection('callRooms').doc(roomId).snapshots();
+      db.listen((event) {
+        if (!event.exists) {
+          signaling.hangCall(remoteRenderer: remoteRenderer, localRenderer: localRenderer);
+          Get.back();
+          if (!cancelByMe) {
+            showDialog(
+              barrierDismissible: false,
+              context: context,
+              builder: (context) => AlertDialog.adaptive(
+                title: const Text('Call End'),
+                content: const Text('Your mate end the Call.'),
+                actions: [
+                  ElevatedButton(
+                    onPressed: () async {
+                      cancelByMe = false;
+                      Navigator.pop(context);
+                    },
+                    child: const Text('Ok'),
+                  ),
+                ],
+              ),
+            );
+          }
+        }
+      });
       _callStartTime = DateTime.now();
       timer = Timer.periodic(const Duration(seconds: 1), (timer) {
         setState(() {
@@ -149,13 +190,66 @@ class _CallPageState extends State<CallPage> {
               child: SizedBox(
                 height: double.infinity,
                 width: double.infinity,
-                child: RTCVideoView(
-                  remoteRenderer,
-                  objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
-                ),
+                child: isConnected
+                    ? RTCVideoView(
+                        remoteRenderer,
+                        objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
+                      )
+                    : Center(
+                        child: Text(
+                          'Ringing...',
+                          style: GoogleFonts.lato(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            fontSize: 20,
+                          ),
+                        ),
+                      ),
               ),
             ),
 
+          if (widget.callType == 'audio')
+            Center(
+              child: Container(
+                height: 150,
+                width: 150,
+                decoration: BoxDecoration(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(100),
+                ),
+                child: SvgPicture.asset(
+                  "assets/icons/default.svg",
+                ),
+              ),
+            ),
+          if (widget.callType == 'audio')
+            Padding(
+              padding: const EdgeInsets.only(top: 180),
+              child: Center(
+                child: Text(
+                  widget.mateName,
+                  style: GoogleFonts.lato(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          if (widget.callType == 'audio' && !isConnected)
+            Padding(
+              padding: const EdgeInsets.only(top: 280),
+              child: Center(
+                child: Text(
+                  'Ringing...',
+                  style: GoogleFonts.lato(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
           // Top Bar
           Align(
             alignment: Alignment.topCenter,
@@ -181,7 +275,7 @@ class _CallPageState extends State<CallPage> {
                     ),
                   ),
                   Text(
-                    _ongoingDuration.toString(),
+                    _ongoingDuration.toString().split('.').first,
                     style: GoogleFonts.lato(
                       color: Colors.white,
                       fontSize: 13,
@@ -195,7 +289,7 @@ class _CallPageState extends State<CallPage> {
           ),
 
           //Local RTCVideoView
-          if (widget.callType != 'audio')
+          if (widget.callType != 'audio' && isConnected)
             Padding(
               padding: const EdgeInsets.only(right: 8, bottom: 100),
               child: Align(
@@ -223,7 +317,27 @@ class _CallPageState extends State<CallPage> {
             localRenderer: localRenderer,
             roomId: roomId,
             callType: widget.callType,
-          )
+          ),
+          if (widget.callType != 'audio')
+            Positioned(
+              top: kToolbarHeight + 50,
+              right: 20,
+              child: SizedBox(
+                height: 45,
+                width: 45,
+                child: IconButton.filled(
+                  style: const ButtonStyle(
+                    backgroundColor: MaterialStatePropertyAll(AppTheme.callButtonsColor),
+                  ),
+                  onPressed: () {
+                    localRenderer.srcObject!.getVideoTracks().forEach((track) {
+                      Helper.switchCamera(track);
+                    });
+                  },
+                  icon: const Icon(Icons.flip_camera_ios_outlined),
+                ),
+              ),
+            ),
         ],
       ),
     );

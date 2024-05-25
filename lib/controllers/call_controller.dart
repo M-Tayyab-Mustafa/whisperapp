@@ -7,6 +7,8 @@ import 'package:flutter_webrtc/flutter_webrtc.dart';
 import '../widgets/custom_loader.dart';
 import 'chat_controller.dart';
 import 'notifications_controller.dart';
+
+typedef PeerConnectionCallback = void Function(RTCPeerConnectionState state);
 typedef StreamStateCallback = void Function(MediaStream stream);
 
 class CallController {
@@ -29,20 +31,21 @@ class CallController {
     required String callType,
     required CustomLoader customLoader,
     required Function(String) roomid,
+    required Function(RTCPeerConnection) peerConnectionCallback,
   }) async {
     FirebaseFirestore db = FirebaseFirestore.instance;
     DocumentReference roomRef = db.collection('callRooms').doc();
 
     peerConnection = await createPeerConnection(configuration);
 
-    registerPeerConnectionListeners(
-      remoteRenderer: remoteRenderer,
-    );
+    registerPeerConnectionListeners(remoteRenderer: remoteRenderer);
 
     localRenderer.srcObject!.getTracks().forEach((track) {
       log('Adding Local Track');
       peerConnection?.addTrack(track, localRenderer.srcObject!);
     });
+
+    peerConnectionCallback(peerConnection!);
 
     var callerCandidatesCollection = roomRef.collection('callerCandidates');
 
@@ -120,6 +123,7 @@ class CallController {
     required String roomId,
     required RTCVideoRenderer remoteRenderer,
     required RTCVideoRenderer localRenderer,
+    required Function(RTCPeerConnection) peerConnectionCallback,
   }) async {
     FirebaseFirestore db = FirebaseFirestore.instance;
     DocumentReference roomRef = db.collection('callRooms').doc(roomId);
@@ -127,12 +131,13 @@ class CallController {
 
     peerConnection = await createPeerConnection(configuration);
 
-    registerPeerConnectionListeners(
-        remoteRenderer: remoteRenderer);
+    registerPeerConnectionListeners(remoteRenderer: remoteRenderer);
 
     localRenderer.srcObject!.getTracks().forEach((track) {
       peerConnection?.addTrack(track, localRenderer.srcObject!);
     });
+
+    peerConnectionCallback(peerConnection!);
 
     var calleeCandidatesCollection = roomRef.collection('calleeCandidates');
 
@@ -210,9 +215,7 @@ class CallController {
 
   // Register PeerConnection Listeners
 
-  void registerPeerConnectionListeners({
-    required RTCVideoRenderer remoteRenderer,
-  }) {
+  void registerPeerConnectionListeners({required RTCVideoRenderer remoteRenderer}) {
     peerConnection?.onIceGatheringState = (RTCIceGatheringState state) {
       log('RTCIceGatheringState:: $state');
     };
@@ -236,21 +239,16 @@ class CallController {
 
   // Close call.
   Future<void> closeCall({
-    required RTCVideoRenderer? remoteRenderer,
+    required RTCVideoRenderer remoteRenderer,
     required RTCVideoRenderer localRenderer,
     required String roomId,
     required CustomLoader customLoader,
   }) async {
-    List<MediaStreamTrack> tracks = localRenderer.srcObject!.getTracks();
-    for (var track in tracks) {
-      track.stop();
-    }
+    localRenderer.srcObject?.getTracks().forEach((track) => track.stop());
 
-    if (remoteRenderer != null) {
-      remoteRenderer.srcObject!.getTracks().forEach((track) => track.stop());
-    }
+    remoteRenderer.srcObject?.getTracks().forEach((track) => track.stop());
 
-    if (peerConnection != null) peerConnection!.close();
+    if (peerConnection != null) peerConnection?.close();
     var db = FirebaseFirestore.instance;
     var roomRef = db.collection('callRooms').doc(roomId);
 
@@ -264,6 +262,22 @@ class CallController {
     }
     await roomRef.delete();
     await customLoader.hideLoader();
+  }
+
+  Future<void> hangCall({
+    required RTCVideoRenderer? remoteRenderer,
+    required RTCVideoRenderer localRenderer,
+  }) async {
+    List<MediaStreamTrack> tracks = localRenderer.srcObject!.getTracks();
+    for (var track in tracks) {
+      track.stop();
+    }
+
+    if (remoteRenderer != null) {
+      remoteRenderer.srcObject!.getTracks().forEach((track) => track.stop());
+    }
+
+    if (peerConnection != null) peerConnection!.close();
     localRenderer.dispose();
     remoteRenderer?.dispose();
   }

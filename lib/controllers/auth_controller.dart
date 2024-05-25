@@ -1,7 +1,5 @@
-
-
+import 'dart:developer';
 import 'dart:io' as io; // Import dart:io with a prefix
-
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -13,9 +11,6 @@ import '../model/user_model.dart';
 import '../routes/route_class.dart';
 import '../widgets/custom_loader.dart';
 // file_handler.dart
-
-
-
 
 class AuthController extends GetxController {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -50,16 +45,12 @@ class AuthController extends GetxController {
     return downloadUrl;
   }
 
-
   // Function to update user status
   Future<void> updateUserStatus(String status) async {
     if (_auth.currentUser != null) {
       String uid = _auth.currentUser!.uid;
       try {
-        await FirebaseFirestore.instance
-            .collection("users")
-            .doc(uid)
-            .update({"userStatus": status});
+        await FirebaseFirestore.instance.collection("users").doc(uid).update({"userStatus": status});
       } catch (e) {}
     }
   }
@@ -84,17 +75,17 @@ class AuthController extends GetxController {
 
   // Reset Password
   Future<void> resetPassword({
-    required String email,required CustomLoader customLoader,
+    required String email,
+    required CustomLoader customLoader,
   }) async {
     try {
       await _auth.sendPasswordResetEmail(email: email);
       Get.snackbar("Success", "Check your email to change password!");
-customLoader.hideLoader();
+      customLoader.hideLoader();
     } catch (e) {
       Get.snackbar("Error sending password reset email", "$e");
       customLoader.hideLoader();
     }
-
   }
 
   // Logout
@@ -123,18 +114,16 @@ customLoader.hideLoader();
       print("Error deleting account: $e");
     }
   }
-  
+
   //Update user token
   Future<void> updateUserToken() async {
-    if (_auth.currentUser != null) {
-      String uid = _auth.currentUser!.uid;
-      String? fcmToken = await messaging.getToken();
-      try {
-        await FirebaseFirestore.instance
-            .collection("users")
-            .doc(uid)
-            .update({"fcmToken": fcmToken});
-      } catch (e) {}
+    String uid = _auth.currentUser!.uid;
+    String? fcmToken = await messaging.getToken();
+    log('New FCM Token $fcmToken');
+    try {
+      await FirebaseFirestore.instance.collection("users").doc(uid).update({"fcmToken": fcmToken});
+    } catch (e) {
+      log(e.toString());
     }
   }
 }

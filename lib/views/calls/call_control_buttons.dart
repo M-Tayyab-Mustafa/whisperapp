@@ -7,6 +7,7 @@ import 'package:whisperapp/controllers/call_controller.dart';
 import 'package:whisperapp/widgets/custom_loader.dart';
 
 import '../../theme/app_theme.dart';
+import 'call_page.dart';
 
 class CallControlButtons extends StatefulWidget {
   const CallControlButtons({
@@ -31,7 +32,7 @@ class CallControlButtons extends StatefulWidget {
 }
 
 class _CallControlButtonsState extends State<CallControlButtons> {
-  bool onSpeaker = false;
+  bool onSpeaker = true;
   bool notMute = true;
   bool openCamera = true;
 
@@ -107,10 +108,12 @@ class _CallControlButtonsState extends State<CallControlButtons> {
                     element.enabled = notMute;
                   });
                 },
-                icon: notMute?SvgPicture.asset(
-                  "assets/icons/audioOn.svg",
-                  color: Colors.white,
-                ):const Icon(Icons.mic_off_rounded),
+                icon: notMute
+                    ? SvgPicture.asset(
+                        "assets/icons/audioOn.svg",
+                        color: Colors.white,
+                      )
+                    : const Icon(Icons.mic_off_rounded),
               ),
             ),
 
@@ -147,15 +150,17 @@ class _CallControlButtonsState extends State<CallControlButtons> {
                               ),
                             ),
                             onPressed: () async {
-                              widget.customLoader.showLoader(context);
+                              cancelByMe = true;
+                              await widget.customLoader.showLoader(context);
                               await widget.signaling
                                   .closeCall(
                                 customLoader: widget.customLoader,
                                 remoteRenderer: widget.remoteRenderer,
                                 localRenderer: widget.localRenderer,
                                 roomId: widget.roomId,
-                              ).whenComplete(() {
-                                Navigator.pop(context);
+                              )
+                                  .whenComplete(() {
+                                Get.back();
                                 Get.back();
                               });
                             },

@@ -31,7 +31,7 @@ class MyChatBubble extends StatelessWidget {
       children: [
         type == "wave" && isSender == true
             ? BubbleNormal(
-                text: stringToBase64.decode(message) ,
+                text: stringToBase64.decode(message),
                 isSender: isSender,
                 //color: Color(0xFF1B97F3),
                 color: Colors.white,
@@ -85,11 +85,11 @@ class MyChatBubble extends StatelessWidget {
                   if (snapshot.hasData && (snapshot.data as DocumentSnapshot).exists) {
                     return ElevatedButton(
                         onPressed: () {
-                          Get.to(AnswerCallPage(
-                            roomId: roomId!,
-                            mateName: mateName,
-                          ))?.then((value) {
-                            if(value != null){
+                          Get.to(() => AnswerCallPage(
+                                roomId: roomId!,
+                                mateName: mateName,
+                              ))?.then((value) {
+                            if (value != null) {
                               showDialog(
                                 barrierDismissible: false,
                                 context: context,
@@ -108,7 +108,6 @@ class MyChatBubble extends StatelessWidget {
                               );
                             }
                           });
-
                         },
                         child: const Text("Join Call"));
                   } else {
