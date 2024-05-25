@@ -84,6 +84,7 @@ dependencies:
   external_app_launcher:
   keep_screen_on:
   flutter_ringtone_player:
+  flutter_foreground_task:
 
 
 

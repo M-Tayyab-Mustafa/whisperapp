@@ -9,7 +9,6 @@
     <uses-permission android:name="android.permission.READ_CONTACTS" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
@@ -28,8 +27,9 @@
         android:name="android.permission.READ_PRIVILEGED_PHONE_STATE"
         tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+
     <queries>
         <package android:name="com.example.whisperapp" />
     </queries>
@@ -39,16 +39,15 @@
         android:icon="@mipmap/ic_launcher"
         android:label="whisperapp">
 
+        <service
+            android:name="com.reviseri.foreground_service.ForegroundService"
+            android:exported="true"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
+
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyDvD4-r8y98N7tAl3Io-ntB5KodsLRLflQ" />
 
-<!--        <service-->
-<!--            android:name="flutter.overlay.window.flutter_overlay_window.OverlayService"-->
-<!--            android:exported="false" />-->
-
-
-<!--        <service android:name="id.flutter.flutter_background_service.BackgroundService" />-->
 
         <activity
             android:name=".MainActivity"

@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -84,6 +85,15 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   //     }
   //   }
   // }
+
+  init() async {
+    SharedPreferences preferences = await SharedPreferences.getInstance();
+    var ringing = preferences.getBool('Ringing');
+    if(ringing == true){
+      preferences.remove('Ringing');
+      log('Ringing::::::::::::::::::::::::: ');
+    }
+  }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) async {
