@@ -68,8 +68,6 @@ class NotificationsController {
       enableVibration: true,
       // sound: RawResourceAndroidNotificationSound('notification'),
       playSound: true,
-      icon: "@drawable/applogo",
-      largeIcon: DrawableResourceAndroidBitmap("applogo"),
     );
     const NotificationDetails notificationDetails = NotificationDetails(android: androidNotificationDetails);
     await localNotification.show(

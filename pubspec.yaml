@@ -79,9 +79,9 @@ dependencies:
   sliding_up_panel: ^2.0.0+1
   file_picker: ^6.2.0
   hive: ^2.2.3
-  flutter_background_service:
+#  flutter_background_service:
+#  flutter_overlay_window:
   external_app_launcher:
-  flutter_overlay_window:
   keep_screen_on:
   flutter_ringtone_player:
 

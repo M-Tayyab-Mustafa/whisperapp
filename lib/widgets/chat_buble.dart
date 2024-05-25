@@ -88,7 +88,27 @@ class MyChatBubble extends StatelessWidget {
                           Get.to(AnswerCallPage(
                             roomId: roomId!,
                             mateName: mateName,
-                          ));
+                          ))?.then((value) {
+                            if(value != null){
+                              showDialog(
+                                barrierDismissible: false,
+                                context: context,
+                                builder: (context) => AlertDialog.adaptive(
+                                  title: const Text('Call End'),
+                                  content: const Text('Your mate end the Call.'),
+                                  actions: [
+                                    ElevatedButton(
+                                      onPressed: () async {
+                                        Navigator.pop(context);
+                                      },
+                                      child: const Text('Ok'),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }
+                          });
+
                         },
                         child: const Text("Join Call"));
                   } else {

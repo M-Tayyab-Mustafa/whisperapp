@@ -154,8 +154,7 @@ class _CallControlButtonsState extends State<CallControlButtons> {
                                 remoteRenderer: widget.remoteRenderer,
                                 localRenderer: widget.localRenderer,
                                 roomId: widget.roomId,
-                              )
-                                  .whenComplete(() {
+                              ).whenComplete(() {
                                 Navigator.pop(context);
                                 Get.back();
                               });

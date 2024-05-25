@@ -7,8 +7,6 @@ import 'package:flutter_webrtc/flutter_webrtc.dart';
 import '../widgets/custom_loader.dart';
 import 'chat_controller.dart';
 import 'notifications_controller.dart';
-
-typedef PeerConnectionCallBack = void Function(RTCPeerConnection peerConnection);
 typedef StreamStateCallback = void Function(MediaStream stream);
 
 class CallController {
@@ -31,15 +29,20 @@ class CallController {
     required String callType,
     required CustomLoader customLoader,
     required Function(String) roomid,
-    required PeerConnectionCallBack peerConnectionCallBack,
   }) async {
     FirebaseFirestore db = FirebaseFirestore.instance;
     DocumentReference roomRef = db.collection('callRooms').doc();
 
     peerConnection = await createPeerConnection(configuration);
-    peerConnectionCallBack(peerConnection!);
 
-    registerPeerConnectionListeners(remoteRenderer: remoteRenderer);
+    registerPeerConnectionListeners(
+      remoteRenderer: remoteRenderer,
+    );
+
+    localRenderer.srcObject!.getTracks().forEach((track) {
+      log('Adding Local Track');
+      peerConnection?.addTrack(track, localRenderer.srcObject!);
+    });
 
     var callerCandidatesCollection = roomRef.collection('callerCandidates');
 
@@ -117,16 +120,15 @@ class CallController {
     required String roomId,
     required RTCVideoRenderer remoteRenderer,
     required RTCVideoRenderer localRenderer,
-    required PeerConnectionCallBack peerConnectionCallBack,
   }) async {
     FirebaseFirestore db = FirebaseFirestore.instance;
     DocumentReference roomRef = db.collection('callRooms').doc(roomId);
     var roomSnapshot = await roomRef.get();
 
     peerConnection = await createPeerConnection(configuration);
-    peerConnectionCallBack(peerConnection!);
 
-    registerPeerConnectionListeners(remoteRenderer: remoteRenderer);
+    registerPeerConnectionListeners(
+        remoteRenderer: remoteRenderer);
 
     localRenderer.srcObject!.getTracks().forEach((track) {
       peerConnection?.addTrack(track, localRenderer.srcObject!);

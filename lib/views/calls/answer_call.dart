@@ -55,75 +55,6 @@ class _AnswerCallPageState extends State<AnswerCallPage> {
     await getCallRoom();
   }
 
-  _peerConnectionCallBack(RTCPeerConnection peerConnection) {
-    peerConnection.onConnectionState = (RTCPeerConnectionState state) {
-      if (state == RTCPeerConnectionState.RTCPeerConnectionStateConnected) {
-        _callStartTime = DateTime.now();
-        timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-          setState(() {
-            _ongoingDuration = DateTime.now().difference(_callStartTime!);
-          });
-        });
-        localRenderer.srcObject!.getTracks().forEach((track) {
-          log('Adding Local Track');
-          peerConnection.addTrack(track, localRenderer.srcObject!);
-        });
-        setState(() {
-          isConnected = true;
-        });
-      }
-      if (state == RTCPeerConnectionState.RTCPeerConnectionStateClosed) {
-        timer?.cancel();
-        showDialog(
-          barrierDismissible: false,
-          context: context,
-          builder: (context) => AlertDialog.adaptive(
-            title: const Text('Call End'),
-            content: const Text('Your mate end the Call.'),
-            actions: [
-              ElevatedButton(
-                onPressed: () async {
-                  Navigator.pop(context);
-                  Get.back();
-                },
-                child: const Text('Ok'),
-              ),
-            ],
-          ),
-        );
-      }
-      if (state == RTCPeerConnectionState.RTCPeerConnectionStateFailed) {
-        timer?.cancel();
-        showDialog(
-          barrierDismissible: false,
-          context: context,
-          builder: (context) => AlertDialog.adaptive(
-            title: const Text('Connection Error'),
-            content: const Text('Unable to Connect. Please Check you internet Connection and then try again.'),
-            actions: [
-              ElevatedButton(
-                onPressed: () async {
-                  Navigator.pop(context);
-                  signaling.closeCall(
-                      remoteRenderer: remoteRenderer,
-                      localRenderer: localRenderer,
-                      roomId: widget.roomId,
-                      customLoader: customLoader);
-                  Get.back();
-                },
-                child: const Text('Ok'),
-              ),
-            ],
-          ),
-        );
-      }
-    };
-
-    peerConnection.onAddStream = (MediaStream stream) {
-      remoteRenderer.srcObject = stream;
-      setState(() {});
-    };
-  }
   Future<void> getCallRoom() async {
     try {
       final doc = await fireStore.collection("users").doc(currentUserUid).collection("calls").doc(currentUserUid).get();
@@ -143,15 +74,26 @@ class _AnswerCallPageState extends State<AnswerCallPage> {
 
   Future<void> initializeMedia() async {
     if (callType != null) {
-      await signaling.openUserMedia(remoteRenderer: remoteRenderer, localRenderer: localRenderer, callType: callType!);
+      await signaling.openUserMedia(
+        remoteRenderer: remoteRenderer,
+        localRenderer: localRenderer,
+        callType: callType!,
+      );
       await signaling
           .joinCallRoom(
-            remoteRenderer: remoteRenderer,
-            localRenderer: localRenderer,
-            roomId: widget.roomId,
-            peerConnectionCallBack: _peerConnectionCallBack,
-          )
-          .whenComplete(() => setState(() {}));
+        remoteRenderer: remoteRenderer,
+        localRenderer: localRenderer,
+        roomId: widget.roomId,
+      )
+          .whenComplete(() {
+        _callStartTime = DateTime.now();
+        timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+          setState(() {
+            _ongoingDuration = DateTime.now().difference(_callStartTime!);
+          });
+        });
+        setState(() {});
+      });
     }
   }
 
@@ -171,11 +113,16 @@ class _AnswerCallPageState extends State<AnswerCallPage> {
         children: [
           // Remote RTCVideoView
           if (callType != 'audio')
-            renderVideoOrText(
-              remoteRender: remoteRenderer,
-              mateName: widget.mateName,
-              connected: isConnected,
-              title: 'Calling',
+            Align(
+              alignment: Alignment.center,
+              child: SizedBox(
+                height: double.infinity,
+                width: double.infinity,
+                child: RTCVideoView(
+                  remoteRenderer,
+                  objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
+                ),
+              ),
             ),
 
           // Top Bar
@@ -217,7 +164,7 @@ class _AnswerCallPageState extends State<AnswerCallPage> {
           ),
 
           //Local RTCVideoView
-          if (callType != 'audio' && isConnected)
+          if (callType != 'audio')
             Padding(
               padding: const EdgeInsets.only(right: 8, bottom: 100),
               child: Align(

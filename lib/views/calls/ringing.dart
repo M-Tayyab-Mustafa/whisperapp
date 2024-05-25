@@ -1,9 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:external_app_launcher/external_app_launcher.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_overlay_window/flutter_overlay_window.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:whisperapp/controllers/call_controller.dart';
 import 'package:whisperapp/views/calls/answer_call.dart';
 import 'package:whisperapp/widgets/custom_loader.dart';
@@ -68,7 +68,6 @@ class _RingingState extends State<Ringing> {
                               customLoader: CustomLoader(),
                             );
                             if (widget.fromOverlay) {
-                              FlutterOverlayWindow.closeOverlay();
                             } else {
                               Get.back();
                             }
@@ -83,20 +82,42 @@ class _RingingState extends State<Ringing> {
                           key: GlobalKey(),
                           onPressed: () async {
                             if (widget.fromOverlay) {
-                              FlutterOverlayWindow.closeOverlay();
+                              // SharedPreferences sharedPreference = await SharedPreferences.getInstance();
+                              // await sharedPreference.setString('calling', snapShot.data!.data()!['username']);
+                              // FirebaseFirestore.instance
+                              //     .collection('${snapShot.data!.data()!['username']} calling')
+                              //     .doc()
+                              //     .set({
+                              //   'roomId': widget.roomId,
+                              // });
                               await LaunchApp.openApp(
                                 androidPackageName: 'com.example.whisperapp',
                               );
                             } else {
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => AnswerCallPage(
-                                    roomId: widget.roomId,
-                                    mateName: snapShot.data!.data()!['username'],
-                                  ),
-                                ),
-                              );
+                              Navigator.pop(context);
+                              Get.to(AnswerCallPage(
+                                roomId: widget.roomId,
+                                mateName: snapShot.data!.data()!['username'],
+                              ))?.then((value) {
+                                if (value != null) {
+                                  showDialog(
+                                    barrierDismissible: false,
+                                    context: context,
+                                    builder: (context) => AlertDialog.adaptive(
+                                      title: const Text('Call End'),
+                                      content: const Text('Your mate end the Call.'),
+                                      actions: [
+                                        ElevatedButton(
+                                          onPressed: () async {
+                                            Navigator.pop(context);
+                                          },
+                                          child: const Text('Ok'),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }
+                              });
                             }
                           },
                           backgroundColor: Colors.green,

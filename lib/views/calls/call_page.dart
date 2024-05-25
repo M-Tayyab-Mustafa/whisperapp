@@ -45,8 +45,6 @@ class _CallPageState extends State<CallPage> {
   String? mateToken;
   String roomId = "none";
 
-  bool isConnected = false;
-
   Duration _ongoingDuration = Duration.zero;
   DateTime? _callStartTime;
 
@@ -69,7 +67,6 @@ class _CallPageState extends State<CallPage> {
     )
         .whenComplete(() async {
       await signaling.createCallRoom(
-        peerConnectionCallBack: _peerConnectionCallBack,
         remoteRenderer: remoteRenderer,
         localRenderer: localRenderer,
         mateUid: widget.mateUid,
@@ -82,77 +79,13 @@ class _CallPageState extends State<CallPage> {
       );
       await getMateToken();
       await sendCalMessageInvitationCode();
-    });
-  }
-
-  _peerConnectionCallBack(RTCPeerConnection peerConnection) {
-    peerConnection.onConnectionState = (RTCPeerConnectionState state) {
-      if (state == RTCPeerConnectionState.RTCPeerConnectionStateConnected) {
-        _callStartTime = DateTime.now();
-        timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-          setState(() {
-            _ongoingDuration = DateTime.now().difference(_callStartTime!);
-          });
-        });
-        localRenderer.srcObject!.getTracks().forEach((track) {
-          log('Adding Local Track');
-          peerConnection.addTrack(track, localRenderer.srcObject!);
-        });
+      _callStartTime = DateTime.now();
+      timer = Timer.periodic(const Duration(seconds: 1), (timer) {
         setState(() {
-          isConnected = true;
+          _ongoingDuration = DateTime.now().difference(_callStartTime!);
         });
-      }
-      if (state == RTCPeerConnectionState.RTCPeerConnectionStateClosed) {
-        timer?.cancel();
-        showDialog(
-          barrierDismissible: false,
-          context: context,
-          builder: (context) => AlertDialog.adaptive(
-            title: const Text('Call End'),
-            content: const Text('Your mate end the Call.'),
-            actions: [
-              ElevatedButton(
-                onPressed: () async {
-                  Navigator.pop(context);
-                  Get.back();
-                },
-                child: const Text('Ok'),
-              ),
-            ],
-          ),
-        );
-      }
-      if (state == RTCPeerConnectionState.RTCPeerConnectionStateFailed) {
-        timer?.cancel();
-        showDialog(
-          barrierDismissible: false,
-          context: context,
-          builder: (context) => AlertDialog.adaptive(
-            title: const Text('Connection Error'),
-            content: const Text('Unable to Connect. Please Check you internet Connection and then try again.'),
-            actions: [
-              ElevatedButton(
-                onPressed: () async {
-                  Navigator.pop(context);
-                  signaling.closeCall(
-                      remoteRenderer: remoteRenderer,
-                      localRenderer: localRenderer,
-                      roomId: roomId,
-                      customLoader: customLoader);
-                  Get.back();
-                },
-                child: const Text('Ok'),
-              ),
-            ],
-          ),
-        );
-      }
-    };
-
-    peerConnection.onAddStream = (MediaStream stream) {
-      remoteRenderer.srcObject = stream;
-      setState(() {});
-    };
+      });
+    });
   }
 
   Future<void> getMateToken() async {
@@ -173,7 +106,8 @@ class _CallPageState extends State<CallPage> {
               chatId: widget.chatRoomId,
               senderId: currentUser,
               room: roomId,
-              messageText: stringToBase64.encode("Hey ${widget.mateName}, Join my call room now & let's talk!, This is my code $roomId"),
+              messageText: stringToBase64
+                  .encode("Hey ${widget.mateName}, Join my call room now & let's talk!, This is my code $roomId"),
               type: "call",
             ),
             //send notification
@@ -210,11 +144,16 @@ class _CallPageState extends State<CallPage> {
         children: [
           // Remote RTCVideoView
           if (widget.callType != 'audio')
-            renderVideoOrText(
-              remoteRender: remoteRenderer,
-              mateName: widget.mateName,
-              connected: isConnected,
-              title: 'Calling',
+            Align(
+              alignment: Alignment.center,
+              child: SizedBox(
+                height: double.infinity,
+                width: double.infinity,
+                child: RTCVideoView(
+                  remoteRenderer,
+                  objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
+                ),
+              ),
             ),
 
           // Top Bar
@@ -256,7 +195,7 @@ class _CallPageState extends State<CallPage> {
           ),
 
           //Local RTCVideoView
-          if (widget.callType != 'audio' && isConnected)
+          if (widget.callType != 'audio')
             Padding(
               padding: const EdgeInsets.only(right: 8, bottom: 100),
               child: Align(
@@ -286,57 +225,6 @@ class _CallPageState extends State<CallPage> {
             callType: widget.callType,
           )
         ],
-      ),
-    );
-  }
-}
-
-Widget renderVideoOrText({
-  required RTCVideoRenderer remoteRender,
-  required String mateName,
-  required bool connected,
-  required String title,
-}) {
-  if (remoteRender.textureId != null) {
-    if (connected) {
-      return Align(
-        alignment: Alignment.center,
-        child: SizedBox(
-          height: double.infinity,
-          width: double.infinity,
-          child: RTCVideoView(
-            remoteRender,
-            objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
-          ),
-        ),
-      );
-    } else {
-      return Container(
-        color: AppTheme.callScaffoldColor,
-        width: double.infinity,
-        height: double.infinity,
-        child: Center(
-          child: Text(
-            "Connecting...",
-            style: GoogleFonts.lato(
-              color: Colors.white,
-            ),
-          ),
-        ),
-      );
-    }
-  } else {
-    return Container(
-      color: AppTheme.callScaffoldColor,
-      width: double.infinity,
-      height: double.infinity,
-      child: Center(
-        child: Text(
-          "$title $mateName ...",
-          style: GoogleFonts.lato(
-            color: Colors.white,
-          ),
-        ),
       ),
     );
   }

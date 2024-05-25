@@ -29,7 +29,7 @@
         tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
-
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <queries>
         <package android:name="com.example.whisperapp" />
     </queries>
@@ -43,11 +43,12 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyDvD4-r8y98N7tAl3Io-ntB5KodsLRLflQ" />
 
-        <service
-            android:name="flutter.overlay.window.flutter_overlay_window.OverlayService"
-            android:exported="false" />
+<!--        <service-->
+<!--            android:name="flutter.overlay.window.flutter_overlay_window.OverlayService"-->
+<!--            android:exported="false" />-->
 
-        <service android:name="id.flutter.flutter_background_service.BackgroundService" />
+
+<!--        <service android:name="id.flutter.flutter_background_service.BackgroundService" />-->
 
         <activity
             android:name=".MainActivity"
