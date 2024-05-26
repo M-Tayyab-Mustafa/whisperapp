@@ -30,7 +30,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     const oneSec = Duration(seconds: 1);
     _timer = Timer.periodic(
       oneSec,
-      (Timer timer) {
+          (Timer timer) {
         if (_start == 0) {
           setState(() {
             timer.cancel();
@@ -92,7 +92,10 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              SizedBox(height: MediaQuery.of(context).size.height * 0.1),
+              SizedBox(height: MediaQuery
+                  .of(context)
+                  .size
+                  .height * 0.1),
 
               Image.asset(
                 'assets/images/otp.png', // Replace with your asset path
@@ -124,7 +127,9 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                 controller: otpController,
                 keyboardType: TextInputType.number,
                 // textAlign: TextAlign.center,
-                cursorColor: Theme.of(context).primaryColor,
+                cursorColor: Theme
+                    .of(context)
+                    .primaryColor,
                 decoration: InputDecoration(
                   hintText: 'Enter OTP',
                   filled: true,
@@ -150,7 +155,6 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                 title: 'Submit',
                 onTap: () async {
                   if (await widget.auth.verifyOTP(otp: otpController.text)) {
-                    Get.back();
                     await updateUserToken();
                     Navigator.pushReplacement(
                       context,
