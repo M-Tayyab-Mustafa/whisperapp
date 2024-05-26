@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:email_otp/email_otp.dart';
+import 'package:get/get.dart';
 import 'package:whisperapp/views/home/home_page.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/round_button.dart';
@@ -149,7 +150,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                 title: 'Submit',
                 onTap: () async {
                   if (await widget.auth.verifyOTP(otp: otpController.text)) {
-
+                    Get.back();
                     await updateUserToken();
                     Navigator.pushReplacement(
                       context,
@@ -190,5 +191,4 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
       log(e.toString());
     }
   }
-
 }

@@ -80,8 +80,7 @@ class _AnswerCallPageState extends State<AnswerCallPage> {
         localRenderer: localRenderer,
         callType: callType!,
       );
-      await signaling
-          .joinCallRoom(
+      await signaling.joinCallRoom(
         remoteRenderer: remoteRenderer,
         localRenderer: localRenderer,
         roomId: widget.roomId,
@@ -101,34 +100,32 @@ class _AnswerCallPageState extends State<AnswerCallPage> {
             }
           };
         },
-      )
-          .whenComplete(() async {
-        var db = FirebaseFirestore.instance.collection('callRooms').doc(widget.roomId).snapshots();
-        db.listen((event) {
-          if (!event.exists) {
-            signaling.hangCall(remoteRenderer: remoteRenderer, localRenderer: localRenderer);
-            if (!cancelByMe) {
-              Get.back();
-              showDialog(
-                barrierDismissible: false,
-                context: context,
-                builder: (context) => AlertDialog.adaptive(
-                  title: const Text('Call End'),
-                  content: const Text('Your mate end the Call.'),
-                  actions: [
-                    ElevatedButton(
-                      onPressed: () async {
-                        cancelByMe = false;
-                        Navigator.pop(context);
-                      },
-                      child: const Text('Ok'),
-                    ),
-                  ],
-                ),
-              );
-            }
+      );
+      var db = FirebaseFirestore.instance.collection('callRooms').doc(widget.roomId).snapshots();
+      db.listen((event) {
+        if (!event.exists) {
+          signaling.hangCall(remoteRenderer: remoteRenderer, localRenderer: localRenderer);
+          if (!cancelByMe) {
+            Get.back();
+            showDialog(
+              barrierDismissible: false,
+              context: context,
+              builder: (context) => AlertDialog.adaptive(
+                title: const Text('Call End'),
+                content: const Text('Your mate end the Call.'),
+                actions: [
+                  ElevatedButton(
+                    onPressed: () async {
+                      cancelByMe = false;
+                      Navigator.pop(context);
+                    },
+                    child: const Text('Ok'),
+                  ),
+                ],
+              ),
+            );
           }
-        });
+        }
       });
     }
   }
