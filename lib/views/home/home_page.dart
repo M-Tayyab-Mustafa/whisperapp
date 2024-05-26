@@ -60,6 +60,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     var callData = preferences.getString('callData');
     if (callData != null) {
       var data = jsonDecode(callData);
+      await preferences.remove('callData');
       FirebaseFirestore.instance.collection('callRooms').doc(data['roomId']).snapshots().listen((doc) {
         if (doc.exists) {
           Get.to(
@@ -70,8 +71,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
           );
         }
       });
-
-      await preferences.remove('callData');
     }
     String uid = FirebaseAuth.instance.currentUser!.uid;
     String? fcmToken = await FirebaseMessaging.instance.getToken();
