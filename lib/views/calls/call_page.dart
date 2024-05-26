@@ -83,10 +83,16 @@ class _CallPageState extends State<CallPage> {
         },
         peerConnectionCallback: (peerConnection) {
           peerConnection.onConnectionState = (RTCPeerConnectionState state) {
-            log('From Call Page RTCPeerConnectionState:: $state');
+            log('RTCPeerConnectionState:: $state');
             if (state == RTCPeerConnectionState.RTCPeerConnectionStateConnected) {
               setState(() {
                 isConnected = true;
+              });
+              _callStartTime = DateTime.now();
+              timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+                setState(() {
+                  _ongoingDuration = DateTime.now().difference(_callStartTime!);
+                });
               });
             }
           };
@@ -98,8 +104,8 @@ class _CallPageState extends State<CallPage> {
       db.listen((event) {
         if (!event.exists) {
           signaling.hangCall(remoteRenderer: remoteRenderer, localRenderer: localRenderer);
-          Get.back();
           if (!cancelByMe) {
+            Get.back();
             showDialog(
               barrierDismissible: false,
               context: context,
@@ -119,12 +125,6 @@ class _CallPageState extends State<CallPage> {
             );
           }
         }
-      });
-      _callStartTime = DateTime.now();
-      timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-        setState(() {
-          _ongoingDuration = DateTime.now().difference(_callStartTime!);
-        });
       });
     });
   }
