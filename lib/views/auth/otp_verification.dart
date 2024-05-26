@@ -1,4 +1,8 @@
 import 'dart:async';
+import 'dart:developer';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:email_otp/email_otp.dart';
 import 'package:whisperapp/views/home/home_page.dart';
@@ -145,6 +149,8 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                 title: 'Submit',
                 onTap: () async {
                   if (await widget.auth.verifyOTP(otp: otpController.text)) {
+
+                    await updateUserToken();
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(builder: (context) => HomePage()), // Adjusted to your home page path
@@ -173,4 +179,16 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
       ),
     );
   }
+
+  Future<void> updateUserToken() async {
+    String uid = FirebaseAuth.instance.currentUser!.uid;
+    String? fcmToken = await FirebaseMessaging.instance.getToken();
+    log('New FCM Token $fcmToken');
+    try {
+      await FirebaseFirestore.instance.collection("users").doc(uid).update({"fcmToken": fcmToken});
+    } catch (e) {
+      log(e.toString());
+    }
+  }
+
 }

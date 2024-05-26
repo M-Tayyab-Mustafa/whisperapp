@@ -160,7 +160,7 @@ class _CallControlButtonsState extends State<CallControlButtons> {
                                 roomId: widget.roomId,
                               )
                                   .whenComplete(() {
-                                Get.back();
+                                    Navigator.pop(context);
                                 Get.back();
                               });
                             },

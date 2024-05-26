@@ -1,9 +1,10 @@
+import 'dart:developer';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:google_fonts/google_fonts.dart';
-
+import 'package:intl/intl.dart';
 import '../../theme/app_theme.dart';
 
 class CallsPage extends StatefulWidget {
@@ -49,8 +50,10 @@ class _CallsPageState extends State<CallsPage> {
                 return ListView.builder(
                   itemCount: streamSnapshot.data!.docs.length,
                   itemBuilder: (context, index) {
-                    streamSnapshot.data!.docs.sort((a, b) => b['time'].compareTo(a['time']),);
+                    streamSnapshot.data!.docs.sort((a, b) => b['time'].compareTo(a['time']));
                     var doc = streamSnapshot.data!.docs[index];
+                    final DateTime dateTime = DateTime.fromMillisecondsSinceEpoch(doc['time'])
+                        .subtract(const Duration(hours: 24)); // Example date time
                     return FutureBuilder(
                         future: FirebaseFirestore.instance
                             .collection('users')
@@ -59,21 +62,23 @@ class _CallsPageState extends State<CallsPage> {
                         builder: (context, featureSnapShot) {
                           if (streamSnapshot.hasData) {
                             return ListTile(
-                              leading:   CircleAvatar(
+                              leading: CircleAvatar(
                                 radius: 25,
                                 child: ClipRRect(
                                   borderRadius: BorderRadius.circular(1000),
-                                  child: featureSnapShot.data?.data()!['photoUrl'] != null? Image.network(
-                                    featureSnapShot.data?.data()!['photoUrl'],
-                                    height: 25 * 2,
-                                    width: 25 * 2,
-                                    fit: BoxFit.fill,
-                                  ):Container(),
+                                  child: featureSnapShot.data?.data()!['photoUrl'] != null
+                                      ? Image.network(
+                                          featureSnapShot.data?.data()!['photoUrl'],
+                                          height: 25 * 2,
+                                          width: 25 * 2,
+                                          fit: BoxFit.fill,
+                                        )
+                                      : Container(),
                                 ),
                               ),
-                              title: Text(featureSnapShot.data?.data()!['username']??''),
+                              title: Text(featureSnapShot.data?.data()!['username'] ?? ''),
                               subtitle: Text(
-                                  '${doc.data()['call_type'].toUpperCase()} ${doc.data()['call_by_me'] ? '\u{2197}' : '\u{2199}'} \u{2022}'),
+                                  '${doc.data()['call_type'].toUpperCase()} ${doc.data()['call_by_me'] ? '\u{2197}' : '\u{2199}'} \u{2022} ${formatDateTime(dateTime)}'),
                             );
                           } else {
                             return const Center(
@@ -120,5 +125,16 @@ class _CallsPageState extends State<CallsPage> {
             }
           }),
     );
+  }
+
+  String formatDateTime(DateTime dateTime) {
+    final now = DateTime.now();
+    final difference = now.difference(dateTime);
+    if (difference.inHours <= 24) {
+      return DateFormat('hh:mm a').format(dateTime);
+    } else {
+      // Format as date month year
+      return DateFormat('dd MMM yyyy').format(dateTime);
+    }
   }
 }

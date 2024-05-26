@@ -136,7 +136,7 @@ class _CustomMessageBarState extends State<CustomMessageBar> {
                             );
                     }
                     _textController.text = '';
-                    //send notifcation
+                    //send notification
                     await NotificationsController.sendMessageNotification(
                       userToken: widget.mateToken,
                       body: rawMessageText.trim(),

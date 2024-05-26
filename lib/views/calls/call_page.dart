@@ -138,7 +138,7 @@ class _CallPageState extends State<CallPage> {
   }
 
   Future<void> sendCalMessageInvitationCode() async {
-    Future.delayed(const Duration(seconds: 5)).then(
+    Future.delayed(const Duration(seconds: 2)).then(
       (value) => {
         //send message
         if (roomId != "none")

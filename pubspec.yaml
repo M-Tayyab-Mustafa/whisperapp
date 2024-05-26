@@ -28,23 +28,19 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
+  flutter:
+    sdk: flutter
   badges: ^3.1.2
   cached_network_image: ^3.3.1
   chat_bubbles: ^1.6.0
   cloud_firestore: ^4.15.8
-
   email_otp: ^2.1.2
   firebase_auth: ^4.17.8
   firebase_messaging: ^14.7.19
   firebase_storage: ^11.6.9
-  flutter:
-    sdk: flutter
-
   flutter_contacts: ^1.1.7+1
   flutter_dotenv: ^5.1.0
   flutter_local_notifications: ^16.3.3
-
-
   flutter_svg: ^2.0.10+1
   flutter_typeahead: ^5.2.0
   flutter_webrtc: ^0.9.48+hotfix.1
@@ -79,12 +75,10 @@ dependencies:
   sliding_up_panel: ^2.0.0+1
   file_picker: ^6.2.0
   hive: ^2.2.3
-#  flutter_background_service:
-#  flutter_overlay_window:
-  external_app_launcher:
-  keep_screen_on:
-  flutter_ringtone_player:
-
+  external_app_launcher: ^4.0.0
+  keep_screen_on: ^3.0.0
+  flutter_ringtone_player: ^3.2.0
+  flutter_background_service: ^5.0.5
 
 
 

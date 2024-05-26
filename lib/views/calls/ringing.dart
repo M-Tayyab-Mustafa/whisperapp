@@ -15,11 +15,10 @@ import '../../creater/webrtc/webrtc_objects.dart';
 import 'call_page.dart';
 
 class Ringing extends StatefulWidget {
-  const Ringing({super.key, required this.mateUid, required this.roomId, required this.fromOverlay});
+  const Ringing({super.key, required this.mateUid, required this.roomId});
 
   final String mateUid;
   final String roomId;
-  final bool fromOverlay;
 
   @override
   State<Ringing> createState() => _RingingState();
@@ -82,10 +81,7 @@ class _RingingState extends State<Ringing> {
                                 roomId: widget.roomId,
                                 customLoader: customLoader,
                               );
-                              if (widget.fromOverlay) {
-                              } else {
-                                Get.back();
-                              }
+                              Get.back();
                             },
                             icon: const Icon(
                               Icons.call_end,
@@ -103,11 +99,7 @@ class _RingingState extends State<Ringing> {
                               ),
                             ),
                             onPressed: () {
-                              if (widget.fromOverlay) {
-                                LaunchApp.openApp(
-                                  androidPackageName: 'com.example.whisperapp',
-                                );
-                              } else {}
+
                               Navigator.pop(context);
                               Get.to(() => AnswerCallPage(
                                     roomId: widget.roomId,

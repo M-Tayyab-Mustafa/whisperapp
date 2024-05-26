@@ -297,7 +297,7 @@ class CallController {
         "call_by_me": true,
         "mate_uid": mateUid,
         "call_type": callType,
-        "time": DateTime.now().toString(),
+        "time": DateTime.now().millisecondsSinceEpoch,
       },
     );
 
@@ -307,7 +307,7 @@ class CallController {
         "call_by_me": false,
         "mate_uid": currentUserUid,
         "call_type": callType,
-        "time": DateTime.now().toString(),
+        "time": DateTime.now().millisecondsSinceEpoch,
       },
     );
   }
@@ -315,15 +315,12 @@ class CallController {
   // clear history.
   Future<void> clearCallHistory(CustomLoader customLoader) async {
     String currentUserUid = FirebaseAuth.instance.currentUser!.uid;
-    String dbRef = "users";
-
     CollectionReference collectionRef =
-        FirebaseFirestore.instance.collection(dbRef).doc(currentUserUid).collection("calls");
-
+        FirebaseFirestore.instance.collection('users').doc(currentUserUid).collection("call_history");
     QuerySnapshot querySnapshot = await collectionRef.get();
     for (QueryDocumentSnapshot doc in querySnapshot.docs) {
       await doc.reference.delete();
     }
-    customLoader.hideLoader();
+    await customLoader.hideLoader();
   }
 }

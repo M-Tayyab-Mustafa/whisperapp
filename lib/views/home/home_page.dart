@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
 
@@ -14,6 +15,7 @@ import '../../controllers/auth_controller.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/custom_icons.dart';
 import '../calls/answer_call.dart';
+import '../calls/ringing.dart';
 import '../settings/app_settings.dart';
 import 'calls_page.dart';
 import 'chats_page.dart';
@@ -41,7 +43,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   List<Widget> pages = [
     const ChatsPage(),
     const CallsPage(),
-    MapScreen(),
+    const MapScreen(),
     AppSettingsPage(),
   ];
 
@@ -54,6 +56,18 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   }
 
   Future<void> updateUserToken() async {
+    var preferences = await SharedPreferences.getInstance();
+    var callData = preferences.getString('callData');
+    if (callData != null) {
+      var data = jsonDecode(callData);
+      Get.to(
+        () => Ringing(
+          mateUid: data['mateUid'],
+          roomId: data['roomId'],
+        ),
+      );
+      preferences.remove('callData');
+    }
     String uid = FirebaseAuth.instance.currentUser!.uid;
     String? fcmToken = await FirebaseMessaging.instance.getToken();
     log('New FCM Token $fcmToken');
@@ -63,42 +77,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       log(e.toString());
     }
   }
-
-  // init() async {
-  //   SharedPreferences sharedPreference = await SharedPreferences.getInstance();
-  //   var value = sharedPreference.getString('calling');
-  //   if (value != null) {
-  //     var data = await FirebaseFirestore.instance.collection('$value calling').doc().get();
-  //     if (data.exists) {
-  //       var roomId = data.data()!['roomId'];
-  //       sharedPreference.remove('calling');
-  //       await FirebaseFirestore.instance.collection('$value calling').doc().delete();
-  //       Get.to(AnswerCallPage(
-  //         roomId: roomId,
-  //         mateName: value,
-  //       ))?.then((value) {
-  //         if (value != null) {
-  //           showDialog(
-  //             barrierDismissible: false,
-  //             context: context,
-  //             builder: (context) => AlertDialog.adaptive(
-  //               title: const Text('Call End'),
-  //               content: const Text('Your mate end the Call.'),
-  //               actions: [
-  //                 ElevatedButton(
-  //                   onPressed: () async {
-  //                     Navigator.pop(context);
-  //                   },
-  //                   child: const Text('Ok'),
-  //                 ),
-  //               ],
-  //             ),
-  //           );
-  //         }
-  //       });
-  //     }
-  //   }
-  // }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) async {
