@@ -60,13 +60,18 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     var callData = preferences.getString('callData');
     if (callData != null) {
       var data = jsonDecode(callData);
-      Get.to(
-        () => Ringing(
-          mateUid: data['mateUid'],
-          roomId: data['roomId'],
-        ),
-      );
-      preferences.remove('callData');
+      FirebaseFirestore.instance.collection('callRooms').doc(data['roomId']).snapshots().listen((doc) {
+        if (doc.exists) {
+          Get.to(
+            () => Ringing(
+              mateUid: data['mateUid'],
+              roomId: data['roomId'],
+            ),
+          );
+        }
+      });
+
+      await preferences.remove('callData');
     }
     String uid = FirebaseAuth.instance.currentUser!.uid;
     String? fcmToken = await FirebaseMessaging.instance.getToken();

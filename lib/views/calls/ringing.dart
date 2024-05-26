@@ -74,8 +74,8 @@ class _RingingState extends State<Ringing> {
                             ),
                             onPressed: () async {
                               cancelByMe = true;
-                              await customLoader.showLoader(context);
-                              await signalling.closeCall(
+                              customLoader.showLoader(context);
+                              signalling.closeCall(
                                 remoteRenderer: RTCVideoRenderer(),
                                 localRenderer: RTCVideoRenderer(),
                                 roomId: widget.roomId,
@@ -99,7 +99,6 @@ class _RingingState extends State<Ringing> {
                               ),
                             ),
                             onPressed: () {
-
                               Navigator.pop(context);
                               Get.to(() => AnswerCallPage(
                                     roomId: widget.roomId,

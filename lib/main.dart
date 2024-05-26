@@ -19,6 +19,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:whisperapp/routes/route_class.dart';
 
 import 'package:whisperapp/views/calls/ringing.dart';
+import 'package:workmanager/workmanager.dart';
 import 'controllers/notifications_controller.dart';
 
 //Listen to background Notifications
@@ -28,14 +29,12 @@ String initialRoute = RouteClass.splashPage;
 Future _firebaseBackgroundNotification(RemoteMessage message) async {
   if (message.notification != null) {}
   try {
-    var preferences = await SharedPreferences.getInstance();
     if (message.data['body'].toString() != 'null') {
-      var body = jsonDecode(message.data['body']);
-      await LaunchApp.openApp(androidPackageName: 'com.example.whisperapp');
-      Future.delayed(const Duration(seconds: 3)).whenComplete(() {
-        initializeService();
-        preferences.setString('callData', jsonEncode(body));
-      });
+      await LaunchApp.openApp(
+        androidPackageName: 'com.example.whisperapp',
+      );
+      var preferences = await SharedPreferences.getInstance();
+      await preferences.setString('callData', message.data['body']);
     }
   } catch (e) {
     log(e.toString());
@@ -91,6 +90,7 @@ Future<void> main() async {
     },
   );
   initializeService();
+  await Workmanager().initialize(callbackDispatcher, isInDebugMode: true);
   runApp(const MainApp());
 }
 
@@ -195,5 +195,19 @@ void onStart(ServiceInstance service) async {
 
   service.on('stopService').listen((event) {
     service.stopSelf();
+  });
+}
+
+@pragma('vm:entry-point') // Mandatory if the App is obfuscated or using Flutter 3.1+
+void callbackDispatcher() {
+  Workmanager().executeTask((task, inputData) async {
+    try {
+
+    } catch (e) {
+      log(e.toString());
+    }
+
+    log("Native called background task: $task"); //simpleTask will be emitted here.
+    return Future.value(true);
   });
 }

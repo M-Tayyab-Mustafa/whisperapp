@@ -29,6 +29,7 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
 
     <queries>
         <package android:name="com.example.whisperapp" />
@@ -43,9 +44,6 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyDvD4-r8y98N7tAl3Io-ntB5KodsLRLflQ" />
 
-        <service android:name="be.tramckrijte.workmanager.BackgroundWorker"
-            android:permission="android.permission.BIND_JOB_SERVICE"
-            android:exported="true"/>
 
         <activity
             android:name=".MainActivity"
