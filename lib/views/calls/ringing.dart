@@ -98,7 +98,10 @@ class _RingingState extends State<Ringing> {
                                 Colors.green,
                               ),
                             ),
-                            onPressed: () {
+                            onPressed: () async {
+                              await FirebaseFirestore.instance.collection('callRooms').doc(widget.roomId).update(
+                                {'isCallAttended': true},
+                              );
                               Navigator.pop(context);
                               Get.to(() => AnswerCallPage(
                                     roomId: widget.roomId,

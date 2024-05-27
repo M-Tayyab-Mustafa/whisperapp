@@ -9,6 +9,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:keep_screen_on/keep_screen_on.dart';
 import 'package:whisperapp/views/calls/call_control_buttons.dart';
 
 import '../../controllers/call_controller.dart';
@@ -60,6 +61,7 @@ class _CallPageState extends State<CallPage> {
   @override
   void initState() {
     cancelByMe = false;
+    KeepScreenOn.turnOn();
     super.initState();
     initRenderer();
   }
@@ -178,6 +180,7 @@ class _CallPageState extends State<CallPage> {
     timer?.cancel();
     localRenderer.dispose();
     remoteRenderer.dispose();
+    KeepScreenOn.turnOff();
     super.dispose();
   }
 

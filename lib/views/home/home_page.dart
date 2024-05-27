@@ -62,7 +62,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       var data = jsonDecode(callData);
       await preferences.remove('callData');
       FirebaseFirestore.instance.collection('callRooms').doc(data['roomId']).snapshots().listen((doc) {
-        if (doc.exists) {
+        if (doc.exists && doc.get('isCallAttended') == false) {
           Get.to(
             () => Ringing(
               mateUid: data['mateUid'],

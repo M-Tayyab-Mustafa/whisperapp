@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'dart:io';
 import 'dart:math' as math;
 import 'dart:ui';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:external_app_launcher/external_app_launcher.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_background_service_android/flutter_background_service_android.dart' as background_service;
@@ -56,12 +57,16 @@ Future<void> main() async {
   FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
     if (message.data['body'].toString() != 'null') {
       var body = jsonDecode(message.data['body']);
-      Get.to(
-        () => Ringing(
-          mateUid: body['mateUid'],
-          roomId: body['roomId'],
-        ),
-      );
+      FirebaseFirestore.instance.collection('callRooms').doc(body['roomId']).snapshots().listen((doc) {
+        if (doc.get('isCallAttended') == false) {
+          Get.to(
+                () => Ringing(
+              mateUid: body['mateUid'],
+              roomId: body['roomId'],
+            ),
+          );
+        }
+      });
     }
   });
 
@@ -70,12 +75,16 @@ Future<void> main() async {
     (RemoteMessage message) async {
       if (message.data['body'].toString() != 'null') {
         var body = jsonDecode(message.data['body']);
-        Get.to(
-          () => Ringing(
-            mateUid: body['mateUid'],
-            roomId: body['roomId'],
-          ),
-        );
+        FirebaseFirestore.instance.collection('callRooms').doc(body['roomId']).snapshots().listen((doc) {
+          if (doc.get('isCallAttended') == false) {
+            Get.to(
+              () => Ringing(
+                mateUid: body['mateUid'],
+                roomId: body['roomId'],
+              ),
+            );
+          }
+        });
       } else {
         if (message.notification != null) {
           String notificationPayLoad = jsonEncode(message.data);
@@ -93,6 +102,8 @@ Future<void> main() async {
   await Permission.systemAlertWindow.request();
   await Permission.backgroundRefresh.request();
   await Workmanager().initialize(callbackDispatcher, isInDebugMode: true);
+  await Permission.phone.request();
+  await Permission.unknown.request();
   runApp(const MainApp());
 }
 
