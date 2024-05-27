@@ -55,8 +55,11 @@ class _CallPageState extends State<CallPage> {
 
   bool isConnected = false;
 
+  String currentUserId = FirebaseAuth.instance.currentUser!.uid;
+
   @override
   void initState() {
+    cancelByMe = false;
     super.initState();
     initRenderer();
   }
@@ -99,6 +102,7 @@ class _CallPageState extends State<CallPage> {
         },
       );
       await getMateToken();
+
       await sendCalMessageInvitationCode();
       var db = FirebaseFirestore.instance.collection('callRooms').doc(roomId).snapshots();
       db.listen((event) {
@@ -159,7 +163,7 @@ class _CallPageState extends State<CallPage> {
                   body: "Hey ${widget.mateName}, Join my call room now & let's talk!",
                   title: "Hey ${widget.mateName}",
                   data: {
-                    'mateUid': widget.mateUid,
+                    'mateUid': currentUserId,
                     'roomId': roomId,
                   },
                 ),

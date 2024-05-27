@@ -130,7 +130,7 @@ class _CallControlButtonsState extends State<CallControlButtons> {
                 onPressed: () {
                   showCupertinoDialog(
                     context: context,
-                    builder: (BuildContext context) {
+                    builder: (BuildContext dialogContext) {
                       return CupertinoAlertDialog(
                         title: const Text("End Call"),
                         content: const Text("Are you sure you want to end this call?"),
@@ -138,7 +138,7 @@ class _CallControlButtonsState extends State<CallControlButtons> {
                           CupertinoDialogAction(
                             child: const Text("Cancel"),
                             onPressed: () {
-                              Navigator.of(context).pop();
+                              Navigator.of(dialogContext).pop();
                             },
                           ),
                           CupertinoDialogAction(
@@ -151,7 +151,7 @@ class _CallControlButtonsState extends State<CallControlButtons> {
                             ),
                             onPressed: () async {
                               cancelByMe = true;
-                              await widget.customLoader.showLoader(context);
+                              await widget.customLoader.showLoader(dialogContext);
                               await widget.signaling
                                   .closeCall(
                                 customLoader: widget.customLoader,
@@ -160,7 +160,7 @@ class _CallControlButtonsState extends State<CallControlButtons> {
                                 roomId: widget.roomId,
                               )
                                   .whenComplete(() {
-                                    Navigator.pop(context);
+                                Get.back();
                                 Get.back();
                               });
                             },

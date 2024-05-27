@@ -5,19 +5,19 @@ import 'dart:math' as math;
 import 'dart:ui';
 import 'package:external_app_launcher/external_app_launcher.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
-import 'package:flutter_background_service_android/flutter_background_service_android.dart' as bakcground_servic;
+import 'package:flutter_background_service_android/flutter_background_service_android.dart' as background_service;
+import 'package:get/get_navigation/get_navigation.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart' as notification;
 import 'package:get/get.dart';
-import 'package:get/get_navigation/get_navigation.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:whisperapp/routes/route_class.dart';
-
 import 'package:whisperapp/views/calls/ringing.dart';
 import 'package:workmanager/workmanager.dart';
 import 'controllers/notifications_controller.dart';
@@ -45,7 +45,6 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
   await Firebase.initializeApp();
-
   //Initialize Notifications
   await NotificationsController.initNotification();
   await NotificationsController.localNotiInit();
@@ -90,6 +89,9 @@ Future<void> main() async {
     },
   );
   initializeService();
+  await Permission.ignoreBatteryOptimizations.request();
+  await Permission.systemAlertWindow.request();
+  await Permission.backgroundRefresh.request();
   await Workmanager().initialize(callbackDispatcher, isInDebugMode: true);
   runApp(const MainApp());
 }
@@ -140,10 +142,7 @@ Future<void> initializeService() async {
 
   await service.configure(
     androidConfiguration: AndroidConfiguration(
-      // this will be executed when app is in foreground or background in separated isolate
       onStart: onStart,
-
-      // auto start service
       autoStart: true,
       isForegroundMode: true,
       notificationChannelId: 'my_foreground',
@@ -152,38 +151,20 @@ Future<void> initializeService() async {
       foregroundServiceNotificationId: math.Random().nextInt(10000),
     ),
     iosConfiguration: IosConfiguration(
-      // auto start service
       autoStart: true,
-
-      // this will be executed when app is in foreground in separated isolate
       onForeground: onStart,
-
-      // you have to enable background fetch capability on xcode project
-      onBackground: onIosBackground,
     ),
   );
 }
 
 @pragma('vm:entry-point')
-Future<bool> onIosBackground(ServiceInstance service) async {
-  WidgetsFlutterBinding.ensureInitialized();
-  DartPluginRegistrant.ensureInitialized();
-  return true;
-}
-
-@pragma('vm:entry-point')
 void onStart(ServiceInstance service) async {
-  // Only available for flutter 3.0.0 and later
   DartPluginRegistrant.ensureInitialized();
 
-  // For flutter prior to version 3.0.0
-  // We have to register the plugin manually
-
-  /// OPTIONAL when use custom notification
   final notification.FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       notification.FlutterLocalNotificationsPlugin();
 
-  if (service is bakcground_servic.AndroidServiceInstance) {
+  if (service is background_service.AndroidServiceInstance) {
     service.on('setAsForeground').listen((event) {
       service.setAsForegroundService();
     });
@@ -201,12 +182,6 @@ void onStart(ServiceInstance service) async {
 @pragma('vm:entry-point') // Mandatory if the App is obfuscated or using Flutter 3.1+
 void callbackDispatcher() {
   Workmanager().executeTask((task, inputData) async {
-    try {
-
-    } catch (e) {
-      log(e.toString());
-    }
-
     log("Native called background task: $task"); //simpleTask will be emitted here.
     return Future.value(true);
   });

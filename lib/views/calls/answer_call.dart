@@ -43,8 +43,35 @@ class _AnswerCallPageState extends State<AnswerCallPage> {
 
   @override
   void initState() {
+    cancelByMe = false;
     super.initState();
     initRenderers();
+    var db = FirebaseFirestore.instance.collection('callRooms').doc(widget.roomId).snapshots();
+    db.listen((event) {
+      if (!event.exists) {
+        signaling.hangCall(remoteRenderer: remoteRenderer, localRenderer: localRenderer);
+        if (!cancelByMe) {
+          Get.back();
+          showDialog(
+            barrierDismissible: false,
+            context: context,
+            builder: (context) => AlertDialog.adaptive(
+              title: const Text('Call End'),
+              content: const Text('Your mate end the Call.'),
+              actions: [
+                ElevatedButton(
+                  onPressed: () async {
+                    cancelByMe = false;
+                    Navigator.pop(context);
+                  },
+                  child: const Text('Ok'),
+                ),
+              ],
+            ),
+          );
+        }
+      }
+    });
   }
 
   Future<void> initRenderers() async {
@@ -101,32 +128,6 @@ class _AnswerCallPageState extends State<AnswerCallPage> {
           };
         },
       );
-      var db = FirebaseFirestore.instance.collection('callRooms').doc(widget.roomId).snapshots();
-      db.listen((event) {
-        if (!event.exists) {
-          signaling.hangCall(remoteRenderer: remoteRenderer, localRenderer: localRenderer);
-          if (!cancelByMe) {
-            Get.back();
-            showDialog(
-              barrierDismissible: false,
-              context: context,
-              builder: (context) => AlertDialog.adaptive(
-                title: const Text('Call End'),
-                content: const Text('Your mate end the Call.'),
-                actions: [
-                  ElevatedButton(
-                    onPressed: () async {
-                      cancelByMe = false;
-                      Navigator.pop(context);
-                    },
-                    child: const Text('Ok'),
-                  ),
-                ],
-              ),
-            );
-          }
-        }
-      });
     }
   }
 
