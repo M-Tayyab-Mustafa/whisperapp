@@ -83,7 +83,8 @@ class _RingingState extends State<Ringing> {
                                 customLoader: customLoader,
                               );
                               if (await FlutterOverlayWindow.isActive()) {
-                                FlutterOverlayWindow.closeOverlay();
+                                await FlutterRingtonePlayer.stop();
+                                await FlutterOverlayWindow.closeOverlay();
                               }
                               Get.back();
                             },
