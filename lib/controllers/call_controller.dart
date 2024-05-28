@@ -217,7 +217,6 @@ class CallController {
   }
 
   // Register PeerConnection Listeners
-
   void registerPeerConnectionListeners({required RTCVideoRenderer remoteRenderer}) {
     peerConnection?.onIceGatheringState = (RTCIceGatheringState state) {
       log('RTCIceGatheringState:: $state');

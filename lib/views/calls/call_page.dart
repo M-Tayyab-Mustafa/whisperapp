@@ -144,35 +144,43 @@ class _CallPageState extends State<CallPage> {
   }
 
   Future<void> sendCalMessageInvitationCode() async {
-    Future.delayed(const Duration(seconds: 2)).then(
-      (value) => {
-        //send message
-        if (roomId != "none")
-          {
-            chatController.sendMessage(
-              chatId: widget.chatRoomId,
-              senderId: currentUser,
-              room: roomId,
-              messageText: stringToBase64
-                  .encode("Hey ${widget.mateName}, Join my call room now & let's talk!, This is my code $roomId"),
-              type: "call",
-            ),
-            //send notification
-            if (mateToken != null)
-              {
-                NotificationsController.sendMessageNotification(
-                  userToken: mateToken!,
-                  body: "Hey ${widget.mateName}, Join my call room now & let's talk!",
-                  title: "Hey ${widget.mateName}",
-                  data: {
-                    'mateUid': currentUserId,
-                    'roomId': roomId,
-                  },
-                ),
-              }
-          }
-      },
-    );
+    Future.delayed(const Duration(seconds: 1)).then((value) => NotificationsController.sendMessageNotification(
+              userToken: mateToken!,
+              body: "Hey ${widget.mateName}, Join my call room now & let's talk!",
+              title: "Hey ${widget.mateName}",
+              data: {
+                'mateUid': currentUserId,
+                'roomId': roomId,
+              },
+            )
+        // {
+        //   //send message
+        //   if (roomId != "none")
+        //     {
+        //       chatController.sendMessage(
+        //         chatId: widget.chatRoomId,
+        //         senderId: currentUser,
+        //         room: roomId,
+        //         messageText: stringToBase64
+        //             .encode("Hey ${widget.mateName}, Join my call room now & let's talk!, This is my code $roomId"),
+        //         type: "call",
+        //       ),
+        //       //send notification
+        //       if (mateToken != null)
+        //         {
+        //           NotificationsController.sendMessageNotification(
+        //             userToken: mateToken!,
+        //             body: "Hey ${widget.mateName}, Join my call room now & let's talk!",
+        //             title: "Hey ${widget.mateName}",
+        //             data: {
+        //               'mateUid': currentUserId,
+        //               'roomId': roomId,
+        //             },
+        //           ),
+        //         }
+        //     }
+        // },
+        );
   }
 
   @override

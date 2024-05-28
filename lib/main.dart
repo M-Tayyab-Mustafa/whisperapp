@@ -22,19 +22,14 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart' as
 import 'package:flutter_background_service_android/flutter_background_service_android.dart' as background_service;
 
 Future _firebaseBackgroundNotification(RemoteMessage message) async {
-  if (message.notification != null) {}
-  try {
-    if (message.data['body'].toString() != 'null') {
-      FlutterOverlayWindow.showOverlay(
-        height: WindowSize.matchParent,
-        overlayTitle: 'Ringing',
-        startPosition: const OverlayPosition(0, kToolbarHeight * 0.55),
-      );
-      await FlutterOverlayWindow.shareData(message.data['body']);
-      await LaunchApp.openApp(androidPackageName: 'com.example.whisperapp');
-    }
-  } catch (e) {
-    log(e.toString());
+  if (message.data['body'].toString() != 'null') {
+    FlutterOverlayWindow.showOverlay(
+      height: WindowSize.matchParent,
+      overlayTitle: 'Ringing',
+      startPosition: const OverlayPosition(0, kToolbarHeight * 0.55),
+    );
+    await FlutterOverlayWindow.shareData(message.data['body']);
+    await LaunchApp.openApp(androidPackageName: 'com.example.whisperapp');
   }
 }
 
@@ -70,6 +65,7 @@ Future<void> main() async {
   //Handle foreground notifications
   FirebaseMessaging.onMessage.listen(
     (RemoteMessage message) async {
+      log(message.data['body'].toString());
       if (message.data['body'].toString() != 'null') {
         var body = jsonDecode(message.data['body']);
         Get.to(
