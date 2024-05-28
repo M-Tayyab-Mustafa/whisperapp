@@ -1,41 +1,37 @@
+import 'dart:io';
+import 'dart:ui';
 import 'dart:convert';
 import 'dart:developer';
-import 'dart:io';
 import 'dart:math' as math;
-import 'dart:ui';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:external_app_launcher/external_app_launcher.dart';
-import 'package:flutter_background_service/flutter_background_service.dart';
-import 'package:flutter_background_service_android/flutter_background_service_android.dart' as background_service;
-import 'package:get/get_navigation/get_navigation.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart' as notification;
 import 'package:get/get.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:workmanager/workmanager.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'controllers/notifications_controller.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:whisperapp/routes/route_class.dart';
 import 'package:whisperapp/views/calls/ringing.dart';
-import 'package:workmanager/workmanager.dart';
-import 'controllers/notifications_controller.dart';
-
-//Listen to background Notifications
-
-String initialRoute = RouteClass.splashPage;
+import 'package:get/get_navigation/get_navigation.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:external_app_launcher/external_app_launcher.dart';
+import 'package:flutter_overlay_window/flutter_overlay_window.dart';
+import 'package:flutter_background_service/flutter_background_service.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart' as notification;
+import 'package:flutter_background_service_android/flutter_background_service_android.dart' as background_service;
 
 Future _firebaseBackgroundNotification(RemoteMessage message) async {
   if (message.notification != null) {}
   try {
     if (message.data['body'].toString() != 'null') {
-      await LaunchApp.openApp(
-        androidPackageName: 'com.example.whisperapp',
+      FlutterOverlayWindow.showOverlay(
+        height: WindowSize.matchParent,
+        overlayTitle: 'Ringing',
+        startPosition: const OverlayPosition(0, kToolbarHeight * 0.55),
       );
-      var preferences = await SharedPreferences.getInstance();
-      await preferences.setString('callData', message.data['body']);
+      await FlutterOverlayWindow.shareData(message.data['body']);
+      await LaunchApp.openApp(androidPackageName: 'com.example.whisperapp');
     }
   } catch (e) {
     log(e.toString());
@@ -46,6 +42,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
   await Firebase.initializeApp();
+
   //Initialize Notifications
   await NotificationsController.initNotification();
   await NotificationsController.localNotiInit();
@@ -57,16 +54,16 @@ Future<void> main() async {
   FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
     if (message.data['body'].toString() != 'null') {
       var body = jsonDecode(message.data['body']);
-      FirebaseFirestore.instance.collection('callRooms').doc(body['roomId']).snapshots().listen((doc) {
-        if (doc.get('isCallAttended') == false) {
-          Get.to(
-                () => Ringing(
-              mateUid: body['mateUid'],
-              roomId: body['roomId'],
-            ),
-          );
-        }
-      });
+      Get.to(
+        () => Ringing(
+          mateUid: body['mateUid'],
+          roomId: body['roomId'],
+        ),
+      );
+      // FirebaseFirestore.instance.collection('callRooms').doc(body['roomId']).snapshots().listen((doc) {
+      // if (doc.get('isCallAttended') == false) {
+      // }
+      // });
     }
   });
 
@@ -75,16 +72,16 @@ Future<void> main() async {
     (RemoteMessage message) async {
       if (message.data['body'].toString() != 'null') {
         var body = jsonDecode(message.data['body']);
-        FirebaseFirestore.instance.collection('callRooms').doc(body['roomId']).snapshots().listen((doc) {
-          if (doc.get('isCallAttended') == false) {
-            Get.to(
-              () => Ringing(
-                mateUid: body['mateUid'],
-                roomId: body['roomId'],
-              ),
-            );
-          }
-        });
+        Get.to(
+          () => Ringing(
+            mateUid: body['mateUid'],
+            roomId: body['roomId'],
+          ),
+        );
+        // FirebaseFirestore.instance.collection('callRooms').doc(body['roomId']).snapshots().listen((doc) {
+        // if (doc.get('isCallAttended') == false) {
+        // }
+        // });
       } else {
         if (message.notification != null) {
           String notificationPayLoad = jsonEncode(message.data);
@@ -97,13 +94,23 @@ Future<void> main() async {
       }
     },
   );
+
+  // Initialize Background Service
   initializeService();
-  await Permission.ignoreBatteryOptimizations.request();
-  await Permission.systemAlertWindow.request();
-  await Permission.backgroundRefresh.request();
-  await Workmanager().initialize(callbackDispatcher, isInDebugMode: true);
-  await Permission.phone.request();
+
+  // Request Permissions
   await Permission.unknown.request();
+  await Permission.backgroundRefresh.request();
+  await Permission.systemAlertWindow.request();
+  await Permission.ignoreBatteryOptimizations.request();
+  await Workmanager().initialize(callbackDispatcher, isInDebugMode: true);
+
+  // Get Overlay Permission
+  if (!(await FlutterOverlayWindow.isPermissionGranted())) {
+    await FlutterOverlayWindow.requestPermission();
+  }
+
+  // Run Application
   runApp(const MainApp());
 }
 
@@ -115,7 +122,7 @@ class MainApp extends StatelessWidget {
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
       getPages: RouteClass.routes,
-      initialRoute: initialRoute,
+      initialRoute: RouteClass.splashPage,
       title: 'Whisper',
       theme: ThemeData(
         useMaterial3: true,
@@ -126,18 +133,15 @@ class MainApp extends StatelessWidget {
 
 Future<void> initializeService() async {
   final service = FlutterBackgroundService();
-
-  /// OPTIONAL, using custom notification channel id
   const notification.AndroidNotificationChannel channel = notification.AndroidNotificationChannel(
-    'my_foreground', // id
-    'MY FOREGROUND SERVICE', // title
-    description: 'This channel is used for important notifications.', // description
-    importance: notification.Importance.low, // importance must be at low or higher level
+    'my_foreground',
+    'MY FOREGROUND SERVICE',
+    description: 'This channel is used for important notifications.',
+    importance: notification.Importance.low,
   );
 
   final notification.FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       notification.FlutterLocalNotificationsPlugin();
-
   if (Platform.isIOS || Platform.isAndroid) {
     await flutterLocalNotificationsPlugin.initialize(
       const notification.InitializationSettings(
@@ -150,7 +154,6 @@ Future<void> initializeService() async {
   await flutterLocalNotificationsPlugin
       .resolvePlatformSpecificImplementation<notification.AndroidFlutterLocalNotificationsPlugin>()
       ?.createNotificationChannel(channel);
-
   await service.configure(
     androidConfiguration: AndroidConfiguration(
       onStart: onStart,
@@ -171,29 +174,63 @@ Future<void> initializeService() async {
 @pragma('vm:entry-point')
 void onStart(ServiceInstance service) async {
   DartPluginRegistrant.ensureInitialized();
-
   final notification.FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       notification.FlutterLocalNotificationsPlugin();
-
   if (service is background_service.AndroidServiceInstance) {
     service.on('setAsForeground').listen((event) {
       service.setAsForegroundService();
     });
-
     service.on('setAsBackground').listen((event) {
       service.setAsBackgroundService();
     });
   }
-
   service.on('stopService').listen((event) {
     service.stopSelf();
   });
 }
 
-@pragma('vm:entry-point') // Mandatory if the App is obfuscated or using Flutter 3.1+
+@pragma('vm:entry-point')
 void callbackDispatcher() {
   Workmanager().executeTask((task, inputData) async {
     log("Native called background task: $task"); //simpleTask will be emitted here.
     return Future.value(true);
   });
+}
+
+// overlay entry point
+@pragma("vm:entry-point")
+void overlayMain() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+  runApp(
+    GetMaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: Padding(
+        padding: const EdgeInsets.only(bottom: kToolbarHeight * 0.5),
+        child: Scaffold(
+          body: StreamBuilder(
+            stream: FlutterOverlayWindow.overlayListener,
+            builder: (context, snapShot) {
+              if (snapShot.hasData) {
+                var data = jsonDecode(snapShot.data!);
+                return Ringing(
+                  mateUid: data['mateUid'],
+                  roomId: data['roomId'],
+                );
+              } else {
+                return Center(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      FlutterOverlayWindow.closeOverlay();
+                    },
+                    child: const Text('Close Overlay'),
+                  ),
+                );
+              }
+            },
+          ),
+        ),
+      ),
+    ),
+  );
 }

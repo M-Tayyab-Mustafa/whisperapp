@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_overlay_window/flutter_overlay_window.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:get/get.dart';
@@ -159,7 +160,10 @@ class _CallControlButtonsState extends State<CallControlButtons> {
                                 localRenderer: widget.localRenderer,
                                 roomId: widget.roomId,
                               )
-                                  .whenComplete(() {
+                                  .whenComplete(() async {
+                                if(await FlutterOverlayWindow.isActive()){
+                                  FlutterOverlayWindow.closeOverlay();
+                                }
                                 Get.back();
                                 Get.back();
                               });

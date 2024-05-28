@@ -78,43 +78,43 @@ class MyChatBubble extends StatelessWidget {
                         ),
                         tail: true,
                       ),
-        type == "call" && isSender == false
-            ? StreamBuilder(
-                stream: FirebaseFirestore.instance.collection('callRooms').doc(roomId).snapshots(),
-                builder: (context, snapshot) {
-                  if (snapshot.hasData && (snapshot.data as DocumentSnapshot).exists) {
-                    return ElevatedButton(
-                        onPressed: () {
-                          Get.to(() => AnswerCallPage(
-                                roomId: roomId!,
-                                mateName: mateName,
-                              ))?.then((value) {
-                            if (value != null) {
-                              showDialog(
-                                barrierDismissible: false,
-                                context: context,
-                                builder: (context) => AlertDialog.adaptive(
-                                  title: const Text('Call End'),
-                                  content: const Text('Your mate end the Call.'),
-                                  actions: [
-                                    ElevatedButton(
-                                      onPressed: () async {
-                                        Navigator.pop(context);
-                                      },
-                                      child: const Text('Ok'),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            }
-                          });
-                        },
-                        child: const Text("Join Call"));
-                  } else {
-                    return const Text('');
-                  }
-                })
-            : const Text(""),
+        // type == "call" && isSender == false
+        //     ? StreamBuilder(
+        //         stream: FirebaseFirestore.instance.collection('callRooms').doc(roomId).snapshots(),
+        //         builder: (context, snapshot) {
+        //           if (snapshot.hasData && (snapshot.data as DocumentSnapshot).exists) {
+        //             return ElevatedButton(
+        //                 onPressed: () {
+        //                   Get.to(() => AnswerCallPage(
+        //                         roomId: roomId!,
+        //                         mateName: mateName,
+        //                       ))?.then((value) {
+        //                     if (value != null) {
+        //                       showDialog(
+        //                         barrierDismissible: false,
+        //                         context: context,
+        //                         builder: (context) => AlertDialog.adaptive(
+        //                           title: const Text('Call End'),
+        //                           content: const Text('Your mate end the Call.'),
+        //                           actions: [
+        //                             ElevatedButton(
+        //                               onPressed: () async {
+        //                                 Navigator.pop(context);
+        //                               },
+        //                               child: const Text('Ok'),
+        //                             ),
+        //                           ],
+        //                         ),
+        //                       );
+        //                     }
+        //                   });
+        //                 },
+        //                 child: const Text("Join Call"));
+        //           } else {
+        //             return const Text('');
+        //           }
+        //         })
+        //     : const Text(""),
       ],
     );
   }

@@ -7,6 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_overlay_window/flutter_overlay_window.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -56,22 +57,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   }
 
   Future<void> updateUserToken() async {
-    var preferences = await SharedPreferences.getInstance();
-    var callData = preferences.getString('callData');
-    if (callData != null) {
-      var data = jsonDecode(callData);
-      await preferences.remove('callData');
-      FirebaseFirestore.instance.collection('callRooms').doc(data['roomId']).snapshots().listen((doc) {
-        if (doc.exists && doc.get('isCallAttended') == false) {
-          Get.to(
-            () => Ringing(
-              mateUid: data['mateUid'],
-              roomId: data['roomId'],
-            ),
-          );
-        }
-      });
-    }
     String uid = FirebaseAuth.instance.currentUser!.uid;
     String? fcmToken = await FirebaseMessaging.instance.getToken();
     log('New FCM Token $fcmToken');
@@ -94,8 +79,11 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   }
 
   @override
-  void dispose() {
+  void dispose() async {
     WidgetsBinding.instance.removeObserver(this);
+    if(await FlutterOverlayWindow.isActive()){
+      FlutterOverlayWindow.closeOverlay();
+    }
     super.dispose();
   }
 
@@ -121,7 +109,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 onTap: (index) {
                   changePage(index);
                 },
-                items: [
+                items: const [
                   BottomNavigationBarItem(
                     icon: Icon(Icons.chat_bubble_outline_outlined),
                     label: "Chats",

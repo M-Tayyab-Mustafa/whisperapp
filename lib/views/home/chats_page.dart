@@ -3,6 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_overlay_window/flutter_overlay_window.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -29,11 +30,11 @@ class ChatsPage extends StatefulWidget {
 }
 
 class _ChatsPageState extends State<ChatsPage> {
-  ChatController chatController = Get.put(ChatController());
-  String currentUserId = FirebaseAuth.instance.currentUser!.uid;
-  FirebaseFirestore firestore = FirebaseFirestore.instance;
-  CustomLoader customLoader = CustomLoader();
   SharedPrefController sharedPrefController = Get.put(SharedPrefController());
+  String currentUserId = FirebaseAuth.instance.currentUser!.uid;
+  FirebaseFirestore fireStore = FirebaseFirestore.instance;
+  ChatController chatController = Get.put(ChatController());
+  CustomLoader customLoader = CustomLoader();
 
   String getFriendUid(AsyncSnapshot<QuerySnapshot<Map<String, dynamic>>> chatData, int index) {
     List<String> members = List<String>.from(chatData.data!.docs[index]['members']);
@@ -141,12 +142,11 @@ class _ChatsPageState extends State<ChatsPage> {
       body: Column(
         children: [
           //Search chats/mate
-
           const SizedBox(height: 10),
           //Chats
           Expanded(
             child: StreamBuilder(
-              stream: firestore.collection("chats").where("members", arrayContains: currentUserId).snapshots(),
+              stream: fireStore.collection("chats").where("members", arrayContains: currentUserId).snapshots(),
               builder: (context, chatSnapshot) {
                 if (!chatSnapshot.hasData) {
                   return const SizedBox();

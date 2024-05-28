@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:external_app_launcher/external_app_launcher.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_overlay_window/flutter_overlay_window.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -81,6 +82,9 @@ class _RingingState extends State<Ringing> {
                                 roomId: widget.roomId,
                                 customLoader: customLoader,
                               );
+                              if (await FlutterOverlayWindow.isActive()) {
+                                FlutterOverlayWindow.closeOverlay();
+                              }
                               Get.back();
                             },
                             icon: const Icon(
@@ -99,14 +103,13 @@ class _RingingState extends State<Ringing> {
                               ),
                             ),
                             onPressed: () async {
-                              await FirebaseFirestore.instance.collection('callRooms').doc(widget.roomId).update(
-                                {'isCallAttended': true},
+                              Get.back();
+                              Get.to(
+                                () => AnswerCallPage(
+                                  roomId: widget.roomId,
+                                  mateName: snapShot.data!.data()!['username'],
+                                ),
                               );
-                              Navigator.pop(context);
-                              Get.to(() => AnswerCallPage(
-                                    roomId: widget.roomId,
-                                    mateName: snapShot.data!.data()!['username'],
-                                  ));
                             },
                             icon: const Icon(
                               Icons.call,

@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_overlay_window/flutter_overlay_window.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:get/get.dart';
@@ -17,7 +18,11 @@ import 'call_control_buttons.dart';
 import 'call_page.dart';
 
 class AnswerCallPage extends StatefulWidget {
-  const AnswerCallPage({Key? key, required this.roomId, required this.mateName}) : super(key: key);
+  const AnswerCallPage({
+    Key? key,
+    required this.roomId,
+    required this.mateName,
+  }) : super(key: key);
 
   final String roomId;
   final String mateName;
@@ -29,7 +34,6 @@ class AnswerCallPage extends StatefulWidget {
 class _AnswerCallPageState extends State<AnswerCallPage> {
   final String currentUserUid = FirebaseAuth.instance.currentUser!.uid;
   final FirebaseFirestore fireStore = FirebaseFirestore.instance;
-
   CallController signaling = WebRTCInstances.getSignalInstance();
   RTCVideoRenderer localRenderer = RTCVideoRenderer();
   RTCVideoRenderer remoteRenderer = RTCVideoRenderer();
@@ -49,12 +53,12 @@ class _AnswerCallPageState extends State<AnswerCallPage> {
     super.initState();
     initRenderers();
     var db = FirebaseFirestore.instance.collection('callRooms').doc(widget.roomId).snapshots();
-    db.listen((event) {
+    db.listen((event) async {
       if (!event.exists) {
         signaling.hangCall(remoteRenderer: remoteRenderer, localRenderer: localRenderer);
         if (!cancelByMe) {
-          Get.back();
-          showDialog(
+          timer?.cancel();
+          await showDialog(
             barrierDismissible: false,
             context: context,
             builder: (context) => AlertDialog.adaptive(
@@ -62,7 +66,7 @@ class _AnswerCallPageState extends State<AnswerCallPage> {
               content: const Text('Your mate end the Call.'),
               actions: [
                 ElevatedButton(
-                  onPressed: () async {
+                  onPressed: () {
                     cancelByMe = false;
                     Navigator.pop(context);
                   },
@@ -71,6 +75,10 @@ class _AnswerCallPageState extends State<AnswerCallPage> {
               ],
             ),
           );
+          Get.back();
+          if (await FlutterOverlayWindow.isActive()) {
+            await FlutterOverlayWindow.closeOverlay();
+          }
         }
       }
     });
@@ -179,7 +187,10 @@ class _AnswerCallPageState extends State<AnswerCallPage> {
             child: AppBar(
               backgroundColor: Colors.transparent,
               leading: IconButton(
-                onPressed: () {
+                onPressed: () async {
+                  if (await FlutterOverlayWindow.isActive()) {
+                    FlutterOverlayWindow.closeOverlay();
+                  }
                   Get.back();
                 },
                 icon: Icon(

@@ -57,7 +57,10 @@ class CallController {
 
     await peerConnection!.setLocalDescription(offer);
 
-    Map<String, dynamic> roomWithOffer = {'offer': offer.toMap(),'isCallAttended': false};
+    Map<String, dynamic> roomWithOffer = {
+      'offer': offer.toMap(),
+      // 'isCallAttended': false
+    };
 
     // Further initialization like adding local streams or handling ICE candidates
 
