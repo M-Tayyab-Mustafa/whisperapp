@@ -99,7 +99,6 @@ Future<void> main() async {
   initializeService();
 
   // Request Permissions
-  await Permission.unknown.request();
   await Permission.backgroundRefresh.request();
   await Permission.systemAlertWindow.request();
   await Permission.ignoreBatteryOptimizations.request();

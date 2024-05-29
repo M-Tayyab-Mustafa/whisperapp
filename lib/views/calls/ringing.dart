@@ -1,12 +1,8 @@
-import 'dart:developer';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:external_app_launcher/external_app_launcher.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_overlay_window/flutter_overlay_window.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:get/get.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:whisperapp/controllers/call_controller.dart';
 import 'package:whisperapp/views/calls/answer_call.dart';
 import 'package:whisperapp/widgets/custom_loader.dart';
@@ -104,7 +100,8 @@ class _RingingState extends State<Ringing> {
                               ),
                             ),
                             onPressed: () async {
-                              Get.back();
+                             Navigator.pop(context);
+                             await FlutterRingtonePlayer.stop();
                               Get.to(
                                 () => AnswerCallPage(
                                   roomId: widget.roomId,

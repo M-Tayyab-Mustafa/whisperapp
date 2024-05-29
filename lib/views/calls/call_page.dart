@@ -149,14 +149,14 @@ class _CallPageState extends State<CallPage> {
         //send message
         if (roomId != "none")
           {
-            chatController.sendMessage(
-              chatId: widget.chatRoomId,
-              senderId: currentUser,
-              room: roomId,
-              messageText: stringToBase64
-                  .encode("Hey ${widget.mateName}, Join my call room now & let's talk!, This is my code $roomId"),
-              type: "call",
-            ),
+            // chatController.sendMessage(
+            //   chatId: widget.chatRoomId,
+            //   senderId: currentUser,
+            //   room: roomId,
+            //   messageText: stringToBase64
+            //       .encode("Hey ${widget.mateName}, Join my call room now & let's talk!, This is my code $roomId"),
+            //   type: "call",
+            // ),
             //send notification
             if (mateToken != null)
               {
