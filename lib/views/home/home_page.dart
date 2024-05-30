@@ -58,6 +58,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   Future<void> updateUserToken() async {
     String uid = FirebaseAuth.instance.currentUser!.uid;
+    var localDb = await SharedPreferences.getInstance();
+    await localDb.setString('loggedInUserId', uid);
     String? fcmToken = await FirebaseMessaging.instance.getToken();
     log('New FCM Token $fcmToken');
     try {
@@ -81,8 +83,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   @override
   void dispose() async {
     WidgetsBinding.instance.removeObserver(this);
-    if(await FlutterOverlayWindow.isActive()){
-      FlutterOverlayWindow.closeOverlay();
+    if (await FlutterOverlayWindow.isActive()) {
+      await FlutterOverlayWindow.closeOverlay();
     }
     super.dispose();
   }

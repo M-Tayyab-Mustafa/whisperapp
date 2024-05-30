@@ -31,98 +31,131 @@ class _RingingState extends State<Ringing> {
   void initState() {
     super.initState();
     FlutterRingtonePlayer.playRingtone(looping: true);
+    var db = FirebaseFirestore.instance.collection('callRooms').doc(widget.roomId).snapshots();
+    db.listen((event) async {
+      if (!event.exists) {
+        signalling.hangCall(remoteRenderer: RTCVideoRenderer(), localRenderer: RTCVideoRenderer());
+        await FlutterRingtonePlayer.stop();
+        Get.back();
+        await FlutterOverlayWindow.closeOverlay();
+        // if (!cancelByMe) {
+        //   await showDialog(
+        //     barrierDismissible: false,
+        //     context: context,
+        //     builder: (context) => AlertDialog.adaptive(
+        //       title: const Text('Call End'),
+        //       content: const Text('Your mate end the Call.'),
+        //       actions: [
+        //         ElevatedButton(
+        //           onPressed: () {
+        //             cancelByMe = false;
+        //             Navigator.pop(context);
+        //           },
+        //           child: const Text('Ok'),
+        //         ),
+        //       ],
+        //     ),
+        //   );
+        //
+        // }
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: FutureBuilder(
-            future: fireStore.collection("users").doc(widget.mateUid).get(),
-            builder: (context, snapShot) {
-              if (snapShot.hasData) {
-                return Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    CircleAvatar(
-                      radius: 50,
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(1000),
-                        child: Image.network(
-                          snapShot.data!.data()!['photoUrl'],
-                          height: 50 * 2,
-                          width: 50 * 2,
-                          fit: BoxFit.fill,
+    return WillPopScope(
+      onWillPop: () async {
+        return false;
+      },
+      child: Scaffold(
+        body: Center(
+          child: FutureBuilder(
+              future: fireStore.collection("users").doc(widget.mateUid).get(),
+              builder: (context, snapShot) {
+                if (snapShot.hasData) {
+                  return Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      CircleAvatar(
+                        radius: 50,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(1000),
+                          child: Image.network(
+                            snapShot.data!.data()!['photoUrl'],
+                            height: 50 * 2,
+                            width: 50 * 2,
+                            fit: BoxFit.fill,
+                          ),
                         ),
                       ),
-                    ),
-                    Text('${snapShot.data!.data()!['username']} Calling...'),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        SizedBox(
-                          height: 60,
-                          width: 60,
-                          child: IconButton.filled(
-                            style: const ButtonStyle(
-                              backgroundColor: MaterialStatePropertyAll(
-                                Colors.redAccent,
-                              ),
-                            ),
-                            onPressed: () async {
-                              cancelByMe = true;
-                              customLoader.showLoader(context);
-                              signalling.closeCall(
-                                remoteRenderer: RTCVideoRenderer(),
-                                localRenderer: RTCVideoRenderer(),
-                                roomId: widget.roomId,
-                                customLoader: customLoader,
-                              );
-                              if (await FlutterOverlayWindow.isActive()) {
-                                await FlutterRingtonePlayer.stop();
-                                await FlutterOverlayWindow.closeOverlay();
-                              }
-                              Get.back();
-                            },
-                            icon: const Icon(
-                              Icons.call_end,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                        SizedBox(
-                          height: 60,
-                          width: 60,
-                          child: IconButton.filled(
-                            style: const ButtonStyle(
-                              backgroundColor: MaterialStatePropertyAll(
-                                Colors.green,
-                              ),
-                            ),
-                            onPressed: () async {
-                             Navigator.pop(context);
-                             await FlutterRingtonePlayer.stop();
-                              Get.to(
-                                () => AnswerCallPage(
-                                  roomId: widget.roomId,
-                                  mateName: snapShot.data!.data()!['username'],
+                      Text('${snapShot.data!.data()!['username']} Calling...'),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          SizedBox(
+                            height: 60,
+                            width: 60,
+                            child: IconButton.filled(
+                              style: const ButtonStyle(
+                                backgroundColor: MaterialStatePropertyAll(
+                                  Colors.redAccent,
                                 ),
-                              );
-                            },
-                            icon: const Icon(
-                              Icons.call,
-                              color: Colors.white,
+                              ),
+                              onPressed: () async {
+                                cancelByMe = true;
+                                customLoader.showLoader(context);
+                                signalling.closeCall(
+                                  remoteRenderer: RTCVideoRenderer(),
+                                  localRenderer: RTCVideoRenderer(),
+                                  roomId: widget.roomId,
+                                  customLoader: customLoader,
+                                );
+                                if (await FlutterOverlayWindow.isActive()) {
+                                  Get.back();
+                                  await FlutterOverlayWindow.closeOverlay();
+                                } else {
+                                  Get.back();
+                                }
+                              },
+                              icon: const Icon(
+                                Icons.call_end,
+                                color: Colors.white,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
-                    )
-                  ],
-                );
-              } else {
-                return const Center(child: CircularProgressIndicator());
-              }
-            }),
+                          SizedBox(
+                            height: 60,
+                            width: 60,
+                            child: IconButton.filled(
+                              style: const ButtonStyle(
+                                backgroundColor: MaterialStatePropertyAll(
+                                  Colors.green,
+                                ),
+                              ),
+                              onPressed: () async {
+                                Get.off(
+                                  () => AnswerCallPage(
+                                    roomId: widget.roomId,
+                                    mateName: snapShot.data!.data()!['username'],
+                                  ),
+                                );
+                              },
+                              icon: const Icon(
+                                Icons.call,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ],
+                      )
+                    ],
+                  );
+                } else {
+                  return const Center(child: CircularProgressIndicator());
+                }
+              }),
+        ),
       ),
     );
   }

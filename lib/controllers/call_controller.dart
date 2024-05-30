@@ -6,7 +6,6 @@ import 'package:flutter_webrtc/flutter_webrtc.dart';
 
 import '../widgets/custom_loader.dart';
 import 'chat_controller.dart';
-import 'notifications_controller.dart';
 
 typedef PeerConnectionCallback = void Function(RTCPeerConnectionState state);
 typedef StreamStateCallback = void Function(MediaStream stream);
@@ -271,18 +270,22 @@ class CallController {
     required RTCVideoRenderer? remoteRenderer,
     required RTCVideoRenderer localRenderer,
   }) async {
-    List<MediaStreamTrack> tracks = localRenderer.srcObject!.getTracks();
-    for (var track in tracks) {
-      track.stop();
-    }
+    try {
+      List<MediaStreamTrack> tracks = localRenderer.srcObject!.getTracks();
+      for (var track in tracks) {
+        track.stop();
+      }
 
-    if (remoteRenderer != null) {
-      remoteRenderer.srcObject!.getTracks().forEach((track) => track.stop());
-    }
+      if (remoteRenderer != null) {
+        remoteRenderer.srcObject!.getTracks().forEach((track) => track.stop());
+      }
 
-    if (peerConnection != null) peerConnection!.close();
-    localRenderer.dispose();
-    remoteRenderer?.dispose();
+      if (peerConnection != null) peerConnection!.close();
+      localRenderer.dispose();
+      remoteRenderer?.dispose();
+    } catch (e) {
+      log(e.toString());
+    }
   }
 
   // Add call history to all mates.

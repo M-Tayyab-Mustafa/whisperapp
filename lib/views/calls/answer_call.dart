@@ -10,12 +10,12 @@ import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:keep_screen_on/keep_screen_on.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../controllers/call_controller.dart';
 import '../../creater/webrtc/webrtc_objects.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/custom_loader.dart';
 import 'call_control_buttons.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'call_page.dart';
 
 class AnswerCallPage extends StatefulWidget {
@@ -33,7 +33,7 @@ class AnswerCallPage extends StatefulWidget {
 }
 
 class _AnswerCallPageState extends State<AnswerCallPage> {
-  final String currentUserUid = FirebaseAuth.instance.currentUser!.uid;
+  String? currentUserUid;
   final FirebaseFirestore fireStore = FirebaseFirestore.instance;
   CallController signaling = WebRTCInstances.getSignalInstance();
   RTCVideoRenderer localRenderer = RTCVideoRenderer();
@@ -50,7 +50,6 @@ class _AnswerCallPageState extends State<AnswerCallPage> {
   @override
   void initState() {
     cancelByMe = false;
-    KeepScreenOn.turnOn();
     super.initState();
     initRenderers();
     var db = FirebaseFirestore.instance.collection('callRooms').doc(widget.roomId).snapshots();
@@ -76,10 +75,10 @@ class _AnswerCallPageState extends State<AnswerCallPage> {
               ],
             ),
           );
-          Get.back();
           if (await FlutterOverlayWindow.isActive()) {
             await FlutterOverlayWindow.closeOverlay();
           }
+          Get.back();
         }
       }
     });
@@ -88,9 +87,14 @@ class _AnswerCallPageState extends State<AnswerCallPage> {
   Future<void> initRenderers() async {
     await localRenderer.initialize();
     await remoteRenderer.initialize();
+    var localDb = await SharedPreferences.getInstance();
+    currentUserUid = localDb.getString('loggedInUserId');
     signaling.peerConnection?.onIceConnectionState = (state) {
       setState(() {});
     };
+    if (!(await FlutterOverlayWindow.isActive())) {
+      KeepScreenOn.turnOn();
+    }
     await getCallRoom();
   }
 
@@ -147,7 +151,11 @@ class _AnswerCallPageState extends State<AnswerCallPage> {
     timer?.cancel();
     remoteRenderer.dispose();
     localRenderer.dispose();
-    KeepScreenOn.turnOff();
+    FlutterOverlayWindow.isActive().then((value) {
+      if (!value) {
+        KeepScreenOn.turnOff();
+      }
+    });
     super.dispose();
   }
 

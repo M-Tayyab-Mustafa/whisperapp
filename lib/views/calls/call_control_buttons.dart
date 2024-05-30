@@ -161,11 +161,13 @@ class _CallControlButtonsState extends State<CallControlButtons> {
                                 roomId: widget.roomId,
                               )
                                   .whenComplete(() async {
-                                if(await FlutterOverlayWindow.isActive()){
-                                  FlutterOverlayWindow.closeOverlay();
+                                if (await FlutterOverlayWindow.isActive()) {
+                                  Get.back();
+                                  await FlutterOverlayWindow.closeOverlay();
+                                } else {
+                                  Get.back();
+                                  Get.back();
                                 }
-                                Get.back();
-                                Get.back();
                               });
                             },
                           ),

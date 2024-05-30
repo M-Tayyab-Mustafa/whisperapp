@@ -202,34 +202,60 @@ void overlayMain() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   runApp(
-    GetMaterialApp(
+    const GetMaterialApp(
       debugShowCheckedModeBanner: false,
-      home: Padding(
-        padding: const EdgeInsets.only(bottom: kToolbarHeight * 0.5),
-        child: Scaffold(
-          body: StreamBuilder(
-            stream: FlutterOverlayWindow.overlayListener,
-            builder: (context, snapShot) {
-              if (snapShot.hasData) {
-                var data = jsonDecode(snapShot.data!);
-                return Ringing(
-                  mateUid: data['mateUid'],
-                  roomId: data['roomId'],
-                );
-              } else {
-                return Center(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      FlutterOverlayWindow.closeOverlay();
-                    },
-                    child: const Text('Close Overlay'),
-                  ),
-                );
-              }
-            },
-          ),
-        ),
-      ),
+      home: OverLayHomeState(),
     ),
   );
 }
+
+class OverLayHomeState extends StatefulWidget {
+  const OverLayHomeState({super.key});
+
+  @override
+  State<OverLayHomeState> createState() => _OverLayHomeStateState();
+}
+
+class _OverLayHomeStateState extends State<OverLayHomeState> {
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    log('Dependencies changed');
+    FlutterOverlayWindow.overlayListener.listen((eventData) {
+      var data = jsonDecode(eventData!);
+      Get.to(() => Ringing(mateUid: data['mateUid'], roomId: data['roomId']));
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container();
+  }
+}
+
+// Scaffold(
+//         body: Padding(
+//           padding: const EdgeInsets.only(bottom: kToolbarHeight * 0.5),
+//           child: StreamBuilder(
+//               stream: FlutterOverlayWindow.overlayListener,
+//               builder: (context, snapshot) {
+//                 if (snapshot.hasData) {
+//                   if (snapshot.data == 'close') {
+//                     return const Center(
+//                       child: CircularProgressIndicator(),
+//                     );
+//                   } else {
+//                     var data = jsonDecode(snapshot.data!);
+//                     return Ringing(
+//                       mateUid: data['mateUid'],
+//                       roomId: data['roomId'],
+//                     );
+//                   }
+//                 } else {
+//                   return const Center(
+//                     child: CircularProgressIndicator(),
+//                   );
+//                 }
+//               }),
+//         ),
+//       )
