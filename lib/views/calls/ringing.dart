@@ -138,6 +138,7 @@ class _RingingState extends State<Ringing> {
                                   () => AnswerCallPage(
                                     roomId: widget.roomId,
                                     mateName: snapShot.data!.data()!['username'],
+                                    mateImageUrl: snapShot.data!.data()!['photoUrl'],
                                   ),
                                 );
                               },

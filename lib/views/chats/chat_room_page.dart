@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+
 // import 'package:flutter_overlay_window/flutter_overlay_window.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
@@ -140,7 +141,6 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                     mateUid: widget.mateUid,
                     callType: "audio",
                     mateName: widget.mateName,
-                    chatRoomId: widget.chatRoomId,
                   ),
                 );
               },
@@ -156,7 +156,6 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                     mateUid: widget.mateUid,
                     callType: "video",
                     mateName: widget.mateName,
-                    chatRoomId: widget.chatRoomId,
                   ),
                 );
               },

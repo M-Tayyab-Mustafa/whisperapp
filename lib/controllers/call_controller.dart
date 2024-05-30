@@ -298,7 +298,8 @@ class CallController {
     String currentUserUid = FirebaseAuth.instance.currentUser!.uid;
 
     // Set the call history to current user.
-    await fireStore.collection('users').doc(currentUserUid).collection("call_history").doc().set(
+    var docName = DateTime.now().millisecondsSinceEpoch.toString();
+    await fireStore.collection('users').doc(currentUserUid).collection("call_history").doc(docName).set(
       {
         "call_by_me": true,
         "mate_uid": mateUid,
@@ -308,7 +309,7 @@ class CallController {
     );
 
     // Set the call history to mateUid.
-    await fireStore.collection('users').doc(mateUid).collection("call_history").doc().set(
+    await fireStore.collection('users').doc(mateUid).collection("call_history").doc(docName).set(
       {
         "call_by_me": false,
         "mate_uid": currentUserUid,

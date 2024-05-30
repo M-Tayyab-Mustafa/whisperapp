@@ -23,10 +23,12 @@ class AnswerCallPage extends StatefulWidget {
     Key? key,
     required this.roomId,
     required this.mateName,
+    required this.mateImageUrl,
   }) : super(key: key);
 
   final String roomId;
   final String mateName;
+  final String? mateImageUrl;
 
   @override
   State<AnswerCallPage> createState() => _AnswerCallPageState();
@@ -42,6 +44,7 @@ class _AnswerCallPageState extends State<AnswerCallPage> {
   String? callType;
 
   bool isConnected = false;
+  bool isFrontCamera = true;
 
   Duration _ongoingDuration = Duration.zero;
   DateTime? _callStartTime;
@@ -161,170 +164,183 @@ class _AnswerCallPageState extends State<AnswerCallPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.callScaffoldColor,
-      body: Stack(
-        children: [
-          // Remote RTCVideoView
-          if (callType != 'audio')
-            Align(
-              alignment: Alignment.center,
-              child: SizedBox(
-                height: double.infinity,
-                width: double.infinity,
-                child: isConnected
-                    ? RTCVideoView(
-                        remoteRenderer,
-                        objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
-                      )
-                    : Center(
-                        child: Text(
-                          'Joining...',
-                          style: GoogleFonts.lato(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            fontSize: 20,
+    return WillPopScope(  onWillPop:() async =>  false,
+      child: Scaffold(
+        backgroundColor: AppTheme.callScaffoldColor,
+        body: Stack(
+          children: [
+            // Remote RTCVideoView
+            if (callType != 'audio')
+              Align(
+                alignment: Alignment.center,
+                child: SizedBox(
+                  height: double.infinity,
+                  width: double.infinity,
+                  child: isConnected
+                      ? RTCVideoView(
+                          remoteRenderer,
+                          objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
+                        )
+                      : Center(
+                          child: Text(
+                            'Joining...',
+                            style: GoogleFonts.lato(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              fontSize: 20,
+                            ),
                           ),
                         ),
+                ),
+              ),
+
+            // Top Bar
+            Align(
+              alignment: Alignment.topCenter,
+              child: AppBar(
+                backgroundColor: Colors.transparent,
+                leading: IconButton(
+                  onPressed: () async {
+                    if (await FlutterOverlayWindow.isActive()) {
+                      FlutterOverlayWindow.closeOverlay();
+                    }
+                    Get.back();
+                  },
+                  icon: Icon(
+                    Platform.isAndroid ? Icons.arrow_back : Icons.arrow_back_ios,
+                    color: Colors.white,
+                  ),
+                ),
+                title: Column(
+                  children: [
+                    Text(
+                      "@${widget.mateName}",
+                      style: GoogleFonts.lato(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
                       ),
+                    ),
+                    Text(
+                      _ongoingDuration.toString().split('.').first,
+                      style: GoogleFonts.lato(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.normal,
+                      ),
+                    ),
+                  ],
+                ),
+                centerTitle: true,
               ),
             ),
 
-          // Top Bar
-          Align(
-            alignment: Alignment.topCenter,
-            child: AppBar(
-              backgroundColor: Colors.transparent,
-              leading: IconButton(
-                onPressed: () async {
-                  if (await FlutterOverlayWindow.isActive()) {
-                    FlutterOverlayWindow.closeOverlay();
-                  }
-                  Get.back();
-                },
-                icon: Icon(
-                  Platform.isAndroid ? Icons.arrow_back : Icons.arrow_back_ios,
-                  color: Colors.white,
+            if (callType == 'audio')
+              Center(
+                child: Container(
+                  height: 150,
+                  width: 150,
+                  decoration: BoxDecoration(
+                    color: Colors.transparent,
+                    borderRadius: BorderRadius.circular(100),
+                  ),
+                  child: widget.mateImageUrl != null
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(300),
+                          child: Image.network(
+                            widget.mateImageUrl!,
+                            height: 150,
+                            width: 150,
+                            fit: BoxFit.fill,
+                          ),
+                        )
+                      : SvgPicture.asset("assets/icons/default.svg"),
                 ),
               ),
-              title: Column(
-                children: [
-                  Text(
-                    "@${widget.mateName}",
+            if (callType == 'audio')
+              Padding(
+                padding: const EdgeInsets.only(top: 180),
+                child: Center(
+                  child: Text(
+                    widget.mateName,
                     style: GoogleFonts.lato(
                       color: Colors.white,
-                      fontSize: 18,
+                      fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  Text(
-                    _ongoingDuration.toString().split('.').first,
+                ),
+              ),
+            if (callType == 'audio' && !isConnected)
+              Padding(
+                padding: const EdgeInsets.only(top: 280),
+                child: Center(
+                  child: Text(
+                    'Joining...',
                     style: GoogleFonts.lato(
                       color: Colors.white,
-                      fontSize: 13,
-                      fontWeight: FontWeight.normal,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                ],
+                ),
               ),
-              centerTitle: true,
-            ),
-          ),
 
-          if (callType == 'audio')
-            Center(
-              child: Container(
-                height: 150,
-                width: 150,
-                decoration: BoxDecoration(
-                  color: Colors.transparent,
-                  borderRadius: BorderRadius.circular(100),
-                ),
-                child: SvgPicture.asset(
-                  "assets/icons/default.svg",
-                ),
-              ),
-            ),
-          if (callType == 'audio')
-            Padding(
-              padding: const EdgeInsets.only(top: 180),
-              child: Center(
-                child: Text(
-                  widget.mateName,
-                  style: GoogleFonts.lato(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
+            //Local RTCVideoView
+            if (callType != 'audio' && isConnected)
+              Padding(
+                padding: const EdgeInsets.only(right: 8, bottom: 100),
+                child: Align(
+                  alignment: Alignment.bottomRight,
+                  child: SizedBox(
+                    height: 150,
+                    width: 100,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: RTCVideoView(
+                        localRenderer,
+                        mirror: true,
+                        objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
-          if (callType == 'audio' && !isConnected)
-            Padding(
-              padding: const EdgeInsets.only(top: 280),
-              child: Center(
-                child: Text(
-                  'Joining...',
-                  style: GoogleFonts.lato(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
 
-          //Local RTCVideoView
-          if (callType != 'audio' && isConnected)
-            Padding(
-              padding: const EdgeInsets.only(right: 8, bottom: 100),
-              child: Align(
-                alignment: Alignment.bottomRight,
+            // Control Buttons
+            CallControlButtons(
+              customLoader: customLoader,
+              signaling: signaling,
+              remoteRenderer: remoteRenderer,
+              localRenderer: localRenderer,
+              roomId: widget.roomId,
+              callType: callType ?? '',
+            ),
+            if (callType != 'audio')
+              Positioned(
+                top: kToolbarHeight + 50,
+                right: 20,
                 child: SizedBox(
-                  height: 150,
-                  width: 100,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: RTCVideoView(
-                      localRenderer,
-                      mirror: true,
-                      objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
+                  height: 45,
+                  width: 45,
+                  child: IconButton.filled(
+                    style: const ButtonStyle(
+                      backgroundColor: MaterialStatePropertyAll(AppTheme.callButtonsColor),
                     ),
+                    onPressed: () {
+                      setState(() {
+                        isFrontCamera = !isFrontCamera;
+                      });
+                      localRenderer.srcObject!.getVideoTracks().forEach((track) {
+                        Helper.switchCamera(track);
+                      });
+                    },
+                    icon: const Icon(Icons.flip_camera_ios_outlined),
                   ),
                 ),
               ),
-            ),
-
-          // Control Buttons
-          CallControlButtons(
-            customLoader: customLoader,
-            signaling: signaling,
-            remoteRenderer: remoteRenderer,
-            localRenderer: localRenderer,
-            roomId: widget.roomId,
-            callType: callType ?? '',
-          ),
-          if (callType != 'audio')
-            Positioned(
-              top: kToolbarHeight + 50,
-              right: 20,
-              child: SizedBox(
-                height: 45,
-                width: 45,
-                child: IconButton.filled(
-                  style: const ButtonStyle(
-                    backgroundColor: MaterialStatePropertyAll(AppTheme.callButtonsColor),
-                  ),
-                  onPressed: () {
-                    localRenderer.srcObject!.getVideoTracks().forEach((track) {
-                      Helper.switchCamera(track);
-                    });
-                  },
-                  icon: const Icon(Icons.flip_camera_ios_outlined),
-                ),
-              ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }

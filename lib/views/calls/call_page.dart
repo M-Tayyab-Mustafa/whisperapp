@@ -27,13 +27,11 @@ class CallPage extends StatefulWidget {
     required this.mateUid,
     required this.callType,
     required this.mateName,
-    required this.chatRoomId,
   });
 
   final String mateUid;
   final String mateName;
   final String callType;
-  final String chatRoomId;
 
   @override
   State<CallPage> createState() => _CallPageState();
@@ -55,6 +53,7 @@ class _CallPageState extends State<CallPage> {
   Timer? timer;
 
   bool isConnected = false;
+  bool isFrontCamera = true;
 
   String currentUserId = FirebaseAuth.instance.currentUser!.uid;
 
@@ -136,11 +135,7 @@ class _CallPageState extends State<CallPage> {
   }
 
   Future<void> getMateToken() async {
-    await FirebaseFirestore.instance
-        .collection("users")
-        .doc(widget.mateUid)
-        .get()
-        .then((snapshot) => {mateToken = snapshot["fcmToken"]});
+    await FirebaseFirestore.instance.collection("users").doc(widget.mateUid).get().then((snapshot) => {mateToken = snapshot["fcmToken"]});
   }
 
   Future<void> sendCalMessageInvitationCode() async {
@@ -186,166 +181,196 @@ class _CallPageState extends State<CallPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.callScaffoldColor,
-      body: Stack(
-        children: [
-          // Remote RTCVideoView
-          if (widget.callType != 'audio')
-            Align(
-              alignment: Alignment.center,
-              child: SizedBox(
-                height: double.infinity,
-                width: double.infinity,
-                child: isConnected
-                    ? RTCVideoView(
-                        remoteRenderer,
-                        objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
-                      )
-                    : Center(
-                        child: Text(
-                          'Ringing...',
-                          style: GoogleFonts.lato(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            fontSize: 20,
+    return WillPopScope(
+      onWillPop:() async =>  false,
+      child: Scaffold(
+        backgroundColor: AppTheme.callScaffoldColor,
+        body: Stack(
+          children: [
+            // Remote RTCVideoView
+            if (widget.callType != 'audio')
+              Align(
+                alignment: Alignment.center,
+                child: SizedBox(
+                  height: double.infinity,
+                  width: double.infinity,
+                  child: isConnected
+                      ? RTCVideoView(
+                          remoteRenderer,
+                          objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
+                        )
+                      : Center(
+                          child: Text(
+                            'Ringing...',
+                            style: GoogleFonts.lato(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              fontSize: 20,
+                            ),
                           ),
                         ),
-                      ),
+                ),
               ),
-            ),
 
-          if (widget.callType == 'audio')
-            Center(
-              child: Container(
-                height: 150,
-                width: 150,
-                decoration: BoxDecoration(
-                  color: Colors.transparent,
-                  borderRadius: BorderRadius.circular(100),
-                ),
-                child: SvgPicture.asset(
-                  "assets/icons/default.svg",
-                ),
+            if (widget.callType == 'audio')
+              Center(
+                child: FutureBuilder(
+                    future: FirebaseFirestore.instance.collection("users").doc(widget.mateUid).get(),
+                    builder: (context, snapshot) {
+                      if (snapshot.hasData) {
+                        return Container(
+                          height: 150,
+                          width: 150,
+                          decoration: BoxDecoration(
+                            color: Colors.transparent,
+                            borderRadius: BorderRadius.circular(100),
+                          ),
+                          child: snapshot.data!.data()!['photoUrl'] != null && snapshot.data!.data()!['photoUrl'].isNotEmpty
+                              ? ClipRRect(
+                                  borderRadius: BorderRadius.circular(300),
+                                  child: Image.network(
+                                    snapshot.data!.data()!['photoUrl'],
+                                    height: 150,
+                                    width: 150,
+                                    fit: BoxFit.fill,
+                                  ),
+                                )
+                              : SvgPicture.asset("assets/icons/default.svg"),
+                        );
+                      } else {
+                        return Container(
+                          height: 150,
+                          width: 150,
+                          decoration: BoxDecoration(
+                            color: Colors.transparent,
+                            borderRadius: BorderRadius.circular(100),
+                          ),
+                          child: SvgPicture.asset("assets/icons/default.svg"),
+                        );
+                      }
+                    }),
               ),
-            ),
-          if (widget.callType == 'audio')
-            Padding(
-              padding: const EdgeInsets.only(top: 180),
-              child: Center(
-                child: Text(
-                  widget.mateName,
-                  style: GoogleFonts.lato(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-          if (widget.callType == 'audio' && !isConnected)
-            Padding(
-              padding: const EdgeInsets.only(top: 280),
-              child: Center(
-                child: Text(
-                  'Ringing...',
-                  style: GoogleFonts.lato(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-          // Top Bar
-          Align(
-            alignment: Alignment.topCenter,
-            child: AppBar(
-              backgroundColor: Colors.transparent,
-              leading: IconButton(
-                onPressed: () {
-                  Get.back();
-                },
-                icon: Icon(
-                  Platform.isAndroid ? Icons.arrow_back : Icons.arrow_back_ios,
-                  color: Colors.white,
-                ),
-              ),
-              title: Column(
-                children: [
-                  Text(
-                    "@${widget.mateName}",
+            if (widget.callType == 'audio')
+              Padding(
+                padding: const EdgeInsets.only(top: 180),
+                child: Center(
+                  child: Text(
+                    widget.mateName,
                     style: GoogleFonts.lato(
                       color: Colors.white,
-                      fontSize: 18,
+                      fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  Text(
-                    _ongoingDuration.toString().split('.').first,
+                ),
+              ),
+            if (widget.callType == 'audio' && !isConnected)
+              Padding(
+                padding: const EdgeInsets.only(top: 280),
+                child: Center(
+                  child: Text(
+                    'Ringing...',
                     style: GoogleFonts.lato(
                       color: Colors.white,
-                      fontSize: 13,
-                      fontWeight: FontWeight.normal,
-                    ),
-                  ),
-                ],
-              ),
-              centerTitle: true,
-            ),
-          ),
-
-          //Local RTCVideoView
-          if (widget.callType != 'audio' && isConnected)
-            Padding(
-              padding: const EdgeInsets.only(right: 8, bottom: 100),
-              child: Align(
-                alignment: Alignment.bottomRight,
-                child: SizedBox(
-                  height: 150,
-                  width: 100,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: RTCVideoView(
-                      localRenderer,
-                      mirror: true,
-                      objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
               ),
-            ),
-
-          // Control Buttons
-          CallControlButtons(
-            customLoader: customLoader,
-            signaling: signaling,
-            remoteRenderer: remoteRenderer,
-            localRenderer: localRenderer,
-            roomId: roomId,
-            callType: widget.callType,
-          ),
-          if (widget.callType != 'audio')
-            Positioned(
-              top: kToolbarHeight + 50,
-              right: 20,
-              child: SizedBox(
-                height: 45,
-                width: 45,
-                child: IconButton.filled(
-                  style: const ButtonStyle(
-                    backgroundColor: MaterialStatePropertyAll(AppTheme.callButtonsColor),
-                  ),
+            // Top Bar
+            Align(
+              alignment: Alignment.topCenter,
+              child: AppBar(
+                backgroundColor: Colors.transparent,
+                leading: IconButton(
                   onPressed: () {
-                    localRenderer.srcObject!.getVideoTracks().forEach((track) {
-                      Helper.switchCamera(track);
-                    });
+                    Get.back();
                   },
-                  icon: const Icon(Icons.flip_camera_ios_outlined),
+                  icon: Icon(
+                    Platform.isAndroid ? Icons.arrow_back : Icons.arrow_back_ios,
+                    color: Colors.white,
+                  ),
                 ),
+                title: Column(
+                  children: [
+                    Text(
+                      "@${widget.mateName}",
+                      style: GoogleFonts.lato(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      _ongoingDuration.toString().split('.').first,
+                      style: GoogleFonts.lato(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.normal,
+                      ),
+                    ),
+                  ],
+                ),
+                centerTitle: true,
               ),
             ),
-        ],
+
+            //Local RTCVideoView
+            if (widget.callType != 'audio' && isConnected)
+              Padding(
+                padding: const EdgeInsets.only(right: 8, bottom: 100),
+                child: Align(
+                  alignment: Alignment.bottomRight,
+                  child: SizedBox(
+                    height: 150,
+                    width: 100,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: RTCVideoView(
+                        localRenderer,
+                        mirror: isFrontCamera,
+                        objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+            // Control Buttons
+            CallControlButtons(
+              customLoader: customLoader,
+              signaling: signaling,
+              remoteRenderer: remoteRenderer,
+              localRenderer: localRenderer,
+              roomId: roomId,
+              callType: widget.callType,
+            ),
+            if (widget.callType != 'audio')
+              Positioned(
+                top: kToolbarHeight + 50,
+                right: 20,
+                child: SizedBox(
+                  height: 45,
+                  width: 45,
+                  child: IconButton.filled(
+                    style: const ButtonStyle(
+                      backgroundColor: MaterialStatePropertyAll(AppTheme.callButtonsColor),
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        isFrontCamera = !isFrontCamera;
+                      });
+                      localRenderer.srcObject!.getVideoTracks().forEach((track) {
+                        Helper.switchCamera(track);
+                      });
+                    },
+                    icon: const Icon(Icons.flip_camera_ios_outlined),
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

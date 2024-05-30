@@ -3,9 +3,11 @@ import 'dart:developer';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../theme/app_theme.dart';
+import '../calls/call_page.dart';
 
 class CallsPage extends StatefulWidget {
   const CallsPage({super.key});
@@ -39,29 +41,84 @@ class _CallsPageState extends State<CallsPage> {
             fontWeight: FontWeight.bold,
           ),
         ),
+        // actions: [
+        //   IconButton(
+        //     onPressed: () async {
+        //       String currentUserUid = FirebaseAuth.instance.currentUser!.uid;
+        //       CollectionReference collectionRef =
+        //       FirebaseFirestore.instance.collection('users').doc(currentUserUid).collection("call_history");
+        //       QuerySnapshot querySnapshot = await collectionRef.get();
+        //       for (QueryDocumentSnapshot doc in querySnapshot.docs) {
+        //         await doc.reference.delete();
+        //       }
+        //     },
+        //     icon: const Icon(Icons.delete),
+        //   ),
+        // ],
       ),
-      backgroundColor: Colors.grey.shade300,
       body: StreamBuilder(
-          stream:
-              FirebaseFirestore.instance.collection('users').doc(currentUser).collection('call_history').snapshots(),
+          stream: FirebaseFirestore.instance.collection('users').doc(currentUser).collection('call_history').snapshots(),
           builder: (context, streamSnapshot) {
             if (streamSnapshot.hasData) {
               if (streamSnapshot.data!.docs.isNotEmpty) {
                 return ListView.builder(
                   itemCount: streamSnapshot.data!.docs.length,
+                  reverse: true,
+                  shrinkWrap: true,
                   itemBuilder: (context, index) {
-                    streamSnapshot.data!.docs.sort((a, b) => b['time'].compareTo(a['time']));
+                    // streamSnapshot.data!.docs.sort((a, b) => int.parse(b.id).compareTo(int.parse(a.id)));
                     var doc = streamSnapshot.data!.docs[index];
-                    final DateTime dateTime = DateTime.fromMillisecondsSinceEpoch(doc['time'])
-                        .subtract(const Duration(hours: 24)); // Example date time
                     return FutureBuilder(
-                        future: FirebaseFirestore.instance
-                            .collection('users')
-                            .doc(doc.data()['call_by_me'] ? currentUser : doc.data()['mate_uid'])
-                            .get(),
+                        future: FirebaseFirestore.instance.collection('users').doc(doc.data()['call_by_me'] ? currentUser : doc.data()['mate_uid']).get(),
                         builder: (context, featureSnapShot) {
                           if (streamSnapshot.hasData) {
                             return ListTile(
+                              onTap: () {
+                                showDialog(
+                                  context: context,
+                                  builder: (context) => AlertDialog.adaptive(
+                                    contentPadding: const EdgeInsets.all(0),
+                                    title: Text('\u{1F4DE} Call ${featureSnapShot.data?.data()!['username']}'),
+                                    actionsAlignment: MainAxisAlignment.spaceBetween,
+                                    actions: [
+                                      ElevatedButton(
+                                        style: ButtonStyle(backgroundColor: MaterialStatePropertyAll(Theme.of(context).primaryColor)),
+                                        onPressed: () {
+                                          Navigator.pop(context);
+                                          Get.to(
+                                            () => CallPage(
+                                              mateUid: doc.data()['mate_uid'],
+                                              callType: "audio",
+                                              mateName: featureSnapShot.data?.data()!['username'],
+                                            ),
+                                          );
+                                        },
+                                        child: Text(
+                                          'Audio',
+                                          style: TextStyle(color: Theme.of(context).secondaryHeaderColor),
+                                        ),
+                                      ),
+                                      ElevatedButton(
+                                        style: ButtonStyle(backgroundColor: MaterialStatePropertyAll(Theme.of(context).primaryColor)),
+                                        onPressed: () {
+                                          Navigator.pop(context);
+                                          Get.to(
+                                            () => CallPage(
+                                              mateUid: doc.data()['mate_uid'],
+                                              callType: "video",
+                                              mateName: featureSnapShot.data?.data()!['username'],
+                                            ),
+                                          );
+                                        },
+                                        child: Text(
+                                          'Video',
+                                          style: TextStyle(color: Theme.of(context).secondaryHeaderColor),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
                               leading: CircleAvatar(
                                 radius: 25,
                                 child: ClipRRect(
@@ -77,8 +134,7 @@ class _CallsPageState extends State<CallsPage> {
                                 ),
                               ),
                               title: Text(featureSnapShot.data?.data()!['username'] ?? ''),
-                              subtitle: Text(
-                                  '${doc.data()['call_type'].toUpperCase()} ${doc.data()['call_by_me'] ? '\u{2197}' : '\u{2199}'} \u{2022} ${formatDateTime(dateTime)}'),
+                              subtitle: Text('${doc.data()['call_type'].toUpperCase()} ${doc.data()['call_by_me'] ? '\u{2197}' : '\u{2199}'} \u{2022} ${formatDateTime(DateTime.fromMillisecondsSinceEpoch(doc['time']))}'),
                             );
                           } else {
                             return const Center(
