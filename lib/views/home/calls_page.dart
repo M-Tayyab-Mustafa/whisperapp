@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -73,52 +74,6 @@ class _CallsPageState extends State<CallsPage> {
                         builder: (context, featureSnapShot) {
                           if (streamSnapshot.hasData) {
                             return ListTile(
-                              onTap: () {
-                                showDialog(
-                                  context: context,
-                                  builder: (context) => AlertDialog.adaptive(
-                                    contentPadding: const EdgeInsets.all(0),
-                                    title: Text('\u{1F4DE} Call ${featureSnapShot.data?.data()!['username']}'),
-                                    actionsAlignment: MainAxisAlignment.spaceBetween,
-                                    actions: [
-                                      ElevatedButton(
-                                        style: ButtonStyle(backgroundColor: MaterialStatePropertyAll(Theme.of(context).primaryColor)),
-                                        onPressed: () {
-                                          Navigator.pop(context);
-                                          Get.to(
-                                            () => CallPage(
-                                              mateUid: doc.data()['mate_uid'],
-                                              callType: "audio",
-                                              mateName: featureSnapShot.data?.data()!['username'],
-                                            ),
-                                          );
-                                        },
-                                        child: Text(
-                                          'Audio',
-                                          style: TextStyle(color: Theme.of(context).secondaryHeaderColor),
-                                        ),
-                                      ),
-                                      ElevatedButton(
-                                        style: ButtonStyle(backgroundColor: MaterialStatePropertyAll(Theme.of(context).primaryColor)),
-                                        onPressed: () {
-                                          Navigator.pop(context);
-                                          Get.to(
-                                            () => CallPage(
-                                              mateUid: doc.data()['mate_uid'],
-                                              callType: "video",
-                                              mateName: featureSnapShot.data?.data()!['username'],
-                                            ),
-                                          );
-                                        },
-                                        child: Text(
-                                          'Video',
-                                          style: TextStyle(color: Theme.of(context).secondaryHeaderColor),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
                               leading: CircleAvatar(
                                 radius: 25,
                                 child: ClipRRect(
@@ -134,7 +89,40 @@ class _CallsPageState extends State<CallsPage> {
                                 ),
                               ),
                               title: Text(featureSnapShot.data?.data()!['username'] ?? ''),
-                              subtitle: Text('${doc.data()['call_type'].toUpperCase()} ${doc.data()['call_by_me'] ? '\u{2197}' : '\u{2199}'} \u{2022} ${formatDateTime(DateTime.fromMillisecondsSinceEpoch(doc['time']))}'),
+                              subtitle: Text(
+                                  '${doc.data()['call_type'].toUpperCase()} ${doc.data()['call_by_me'] ? '\u{2197}' : '\u{2199}'} \u{2022} ${formatDateTime(DateTime.fromMillisecondsSinceEpoch(doc['time']))}'),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                      onPressed: () => Get.to(
+                                            () => CallPage(
+                                              mateUid: doc.data()['mate_uid'],
+                                              callType: "audio",
+                                              mateName: featureSnapShot.data?.data()!['username'],
+                                            ),
+                                          ),
+                                      icon: SvgPicture.asset(
+                                        "assets/icons/call.svg",
+                                        color: AppTheme.mainColor,
+                                      )),
+                                  const SizedBox(
+                                    width: 10,
+                                  ),
+                                  IconButton(
+                                      onPressed: () => Get.to(
+                                            () => CallPage(
+                                              mateUid: doc.data()['mate_uid'],
+                                              callType: "video",
+                                              mateName: featureSnapShot.data?.data()!['username'],
+                                            ),
+                                          ),
+                                      icon: SvgPicture.asset(
+                                        "assets/icons/video.svg",
+                                        color: AppTheme.mainColor,
+                                      )),
+                                ],
+                              ),
                             );
                           } else {
                             return const Center(
