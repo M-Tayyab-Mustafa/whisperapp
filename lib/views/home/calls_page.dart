@@ -70,7 +70,7 @@ class _CallsPageState extends State<CallsPage> {
                     // streamSnapshot.data!.docs.sort((a, b) => int.parse(b.id).compareTo(int.parse(a.id)));
                     var doc = streamSnapshot.data!.docs[index];
                     return FutureBuilder(
-                        future: FirebaseFirestore.instance.collection('users').doc(doc.data()['call_by_me'] ? currentUser : doc.data()['mate_uid']).get(),
+                        future: FirebaseFirestore.instance.collection('users').doc(doc.data()['mate_uid']).get(),
                         builder: (context, featureSnapShot) {
                           if (streamSnapshot.hasData) {
                             return ListTile(
