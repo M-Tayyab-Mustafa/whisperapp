@@ -358,11 +358,12 @@ class _CallPageState extends State<CallPage> {
                       backgroundColor: MaterialStatePropertyAll(AppTheme.callButtonsColor),
                     ),
                     onPressed: () {
-                      setState(() {
-                        isFrontCamera = !isFrontCamera;
-                      });
                       localRenderer.srcObject!.getVideoTracks().forEach((track) {
                         Helper.switchCamera(track);
+                        log(track.getSettings().toString());
+                      });
+                      setState(() {
+                        isFrontCamera = !isFrontCamera;
                       });
                     },
                     icon: const Icon(Icons.flip_camera_ios_outlined),

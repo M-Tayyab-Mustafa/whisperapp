@@ -44,11 +44,11 @@ class _AnswerCallPageState extends State<AnswerCallPage> {
   String? callType;
 
   bool isConnected = false;
-  bool isFrontCamera = true;
-
   Duration _ongoingDuration = Duration.zero;
   DateTime? _callStartTime;
   Timer? timer;
+
+  bool isFrontCamera = true;
 
   @override
   void initState() {
@@ -299,7 +299,7 @@ class _AnswerCallPageState extends State<AnswerCallPage> {
                       borderRadius: BorderRadius.circular(10),
                       child: RTCVideoView(
                         localRenderer,
-                        mirror: true,
+                        mirror: isFrontCamera,
                         objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
                       ),
                     ),
@@ -328,11 +328,11 @@ class _AnswerCallPageState extends State<AnswerCallPage> {
                       backgroundColor: MaterialStatePropertyAll(AppTheme.callButtonsColor),
                     ),
                     onPressed: () {
-                      setState(() {
-                        isFrontCamera = !isFrontCamera;
-                      });
                       localRenderer.srcObject!.getVideoTracks().forEach((track) {
                         Helper.switchCamera(track);
+                      });
+                      setState(() {
+                        isFrontCamera = !isFrontCamera;
                       });
                     },
                     icon: const Icon(Icons.flip_camera_ios_outlined),
